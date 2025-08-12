@@ -1,6 +1,6 @@
 # Simulating the Scheme
 
-This repo captures my initial testing of [simpn]() for the purposes of 
+This repo captures my initial testing of [simpn](https://github.com/bpogroup/simpn) for the purposes of 
 simulating a process modelled in BPMN.
 
 ## Goals
@@ -21,7 +21,7 @@ of simtokens and simvars still feels a bit foreign to me.
 
 ### Initial Thoughts on simPN
 
-Very cool library. The team over in TU/e and Prof. Remco Dikjman have made
+Very cool library. The team over in TU/e and Prof. Remco Dijkman have made
 something that could be used for simulation of basically anything.
 
 For my personal peference, it initially felt like I was always writing the
