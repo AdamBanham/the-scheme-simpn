@@ -33,7 +33,7 @@ prototypes from `simpn.prototypes` related to BPMN.
 
 ### Pre-robodebt
 
-I have been playing around with the initial phase of the pre-robodebt process.
+I have been playing around with the initial phase of the pre-robodebt process. The sim file for this initial phase is [tut-bpmn-01.py](./tut-bpmn-01.py).
 
 ![demo of sim](./output.gif)
 
