@@ -251,7 +251,7 @@ class Visualisation:
         y = (5 / self._zoom_level)
         font = pygame.font.SysFont('Calibri', TEXT_SIZE)
         # add the current time of the problem in the top left
-        label = font.render(f"Current Time: {round(self._problem.clock,2)}", True, TUE_RED)
+        label = font.render(f"Current Clock: {round(self._problem.clock,2)}", True, TUE_RED)
         text_x_pos = 5 / self._zoom_level
         text_y_pos = (label.get_height() / self._zoom_level) + y
         self.__screen.blit(label, (text_x_pos, text_y_pos))
@@ -549,16 +549,25 @@ class Visualisation:
                     print("Error while drawing the visualisation.")
                     print(traceback.format_exc())
                     self.__running = False
-                clock.tick(90)
+                clock.tick(30)
 
             pygame.quit()
             if (self._record):
                 print("Visualisation:: Writing record...")
-                imageio.mimsave('output.gif',
+                
+                import os 
+                i = 0
+                name = f"output-{i:03d}.gif"
+                while os.path.exists(name):
+                    name = f"output-{i:03d}.gif"
+                    i += 1
+
+                imageio.mimsave(name,
                     self._frames,
                     fps=30,
-                    palettesize=256,         # Use the maximum palette size
-                    subrectangles=True       # May help with compression/quality
+                    palettesize=256,   
+                    subrectangles=True 
                 )
+
                 print("Visualisation:: Finished writing record...")
                 

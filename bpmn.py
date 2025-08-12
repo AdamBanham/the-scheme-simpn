@@ -350,8 +350,8 @@ class HelperBPMNIntermediateEvent(BPMNIntermediateEvent):
     def get_visualisation(self):
         return self.BPMNIntermediateEventViz(self)
 
-
 from simpn.prototypes import BPMNExclusiveSplitGateway
+from simpn.prototypes import BPMNExclusiveJoinGateway
 
 class HelperBPMNExclusiveSplit(BPMNExclusiveSplitGateway):
     """
@@ -384,3 +384,25 @@ class HelperBPMNExclusiveSplit(BPMNExclusiveSplitGateway):
     @abstractmethod
     def choice(c):
         pass
+
+class HelperBPMNExclusiveJoin(BPMNExclusiveJoinGateway):
+    """
+    Subclass this to define an exclusive join gateway in BPMN with minimal boilerplate.
+    Set class variables: model, incoming, outgoing, name.
+    Registration is automatic on class definition.
+    """
+    model = None
+    incoming = None
+    outgoing = None
+    name = None
+
+    def __init_subclass__(cls):
+        if not all(hasattr(cls, attr) for attr in ("model", "incoming", "outgoing", "name")):
+            raise AttributeError("HelperBPMNExclusiveSplitGateway subclasses must define model, incoming, outgoing, and name class variables.")
+        # Register the gateway automatically
+        cls(
+            cls.model,
+            cls.incoming,
+            cls.outgoing,
+            cls.name
+        )

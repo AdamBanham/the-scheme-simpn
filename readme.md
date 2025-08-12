@@ -21,8 +21,8 @@ of simtokens and simvars still feels a bit foreign to me.
 
 ### Initial Thoughts on simPN
 
-Very cool library. The team over in TU/e and Prof. Remco Dijkman have made
-something that could be used for simulation of basically anything.
+Very cool library. The team over at TU/e and Prof. Remco Dijkman have made
+something that could be used for the simulation of basically anything.
 
 For my personal peference, it initially felt like I was always writing the
 plumbing for my modeling rather than declaratively denoting the steps. So
@@ -35,7 +35,12 @@ prototypes from `simpn.prototypes` related to BPMN.
 
 I have been playing around with the initial phase of the pre-robodebt process. The sim file for this initial phase is [tut-bpmn-01.py](./tut-bpmn-01.py).
 
-![demo of sim](./output.gif)
+![demo of sim](./output-000.gif)
+
+Played around with modeling the second phase, extended outreach,
+I found I was still playing around plumbing for simvars. I think adding a way to say a var and it being made for me would be helpful.
+
+![demo of phase#2](./output-001.gif)
 
 ### OCI
 

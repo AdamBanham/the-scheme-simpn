@@ -1,10 +1,9 @@
 from simpn.simulator import SimProblem, SimToken
-from simpn.prototypes import BPMNExclusiveJoinGateway, BPMNEndEvent, BPMNIntermediateEvent
-from simpn.reporters import EventLogReporter as reporter
 from visualisation import Visualisation
 from bpmn import HelperBPMNTask, HelperBPMNStart
 from bpmn import HelperBPMNExclusiveSplit, HelperBPMNIntermediateEvent
-from bpmn import HelperBPMNEnd
+from bpmn import HelperBPMNEnd, HelperBPMNExclusiveJoin
+from util import PriorityScheduler
 
 from math import exp
 from random import uniform, choice as random_choice
@@ -13,68 +12,8 @@ from sys import argv
 
 LAYOUT_FILE = join(".", "tut-bpmn-01.layout")
 
-class PriorityScheduler:
-
-    def __init__(self):
-        pass 
-
-    def log(self, msg):
-        print(f"PriorityScheduler::{msg}")
-
-    def __call__(self, bindings, *args, **kwds):
-
-        if (len(bindings) < 2):
-            # self.log("Short scheduling...")
-            return bindings[0]
-
-        self.log("Scheduling...")
-        def count_actions(choice):
-            actions = 0
-            if isinstance(choice, SimToken):
-                if isinstance(choice.value, tuple) and len(choice.value) > 1:
-
-                    nested_values = False
-                    for vals in choice.value:
-                        nested_values = nested_values or isinstance(vals, tuple)
-                        if nested_values:
-                            break
-
-                    if nested_values:
-                        for vals in choice.value:
-                            if not isinstance(vals, tuple):
-                                continue
-                            if 'Intervention' in vals[0]:
-                                actions += vals[1]
-                    else:
-                        if 'Intervention Loaded' in choice.value[0]:
-                            actions += choice.value[1]
-            return actions
-
-        def grabber(bind):
-            actions = 0
-            for choice in bind[0][0]:
-                actions += count_actions(choice)
-            return actions
-        
-        self.log("sorting...")
-        queue = sorted(bindings, key=grabber, reverse=True)
-        top_action = count_actions(queue[0])
-        self.log(f"selection for {top_action}...")
-        top_choices = [ ]
-        if top_action == 0:
-            top_choices = queue
-        else:
-            for choice in queue:
-                count = count_actions(choice)
-                if count < top_action:
-                    break
-                top_choices.append(choice)
-        selected = random_choice(top_choices)
-        self.log(f"selected one from {len(top_choices)}...")
-        return selected
-
 shop = SimProblem(
-    binding_priority=PriorityScheduler()
+    binding_priority=PriorityScheduler("Intervention Loaded")
 )
 
 AGENTS = 25
@@ -220,13 +159,11 @@ class CheckingForVulnerability(HelperBPMNExclusiveSplit):
         else:
             return [None, SimToken(c)]
         
-
-BPMNExclusiveJoinGateway(
-    shop,
-    [j1a, j1b],
-    [in_q],
-    "exclusive-join-1"
-)
+class ExclusiveJoin1(HelperBPMNExclusiveJoin):
+    model = shop 
+    incoming = [j1a, j1b]
+    outgoing = [in_q]
+    name = "exclusive-join-1"   
 
 class IssueNotice(HelperBPMNTask):
     model = shop
@@ -244,6 +181,6 @@ class IssueNotice(HelperBPMNTask):
 vis = Visualisation(shop,
                     layout_algorithm="auto",
                     layout_file=LAYOUT_FILE,
-                    record=True)
+                    record=False)
 vis.show()
 vis.save_layout(LAYOUT_FILE)
