@@ -275,7 +275,7 @@ class Visualisation:
 
             if (self._problem.clock > 0):
                 label = font.render(
-                    f"Clock/sec: {round(self._slow_move_dur/self._problem.clock,1)} sec/cl",
+                    f"Seconds to Clock: {round(self._slow_move_dur/self._problem.clock,1)} sec/cl",
                     True, TUE_RED
                     )
                 text_x_pos = 5 / self._zoom_level
