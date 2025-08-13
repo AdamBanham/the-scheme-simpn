@@ -1,11 +1,17 @@
 from simpn.simulator import SimProblem, SimToken
 
+from joblib import Parallel, delayed 
+
 from random import choice as random_choice
+from itertools import batched, product
+from time import time as now
+from copy import deepcopy
 
 class PriorityScheduler:
-
+    
     def __init__(self, start_name):
         self._start_name = start_name 
+        self.pool = Parallel(n_jobs=-2)
 
     def log(self, msg):
         print(f"PriorityScheduler::{msg}")
@@ -17,7 +23,7 @@ class PriorityScheduler:
             return bindings[0]
 
         self.log("Scheduling...")
-        def count_actions(choice):
+        def count_actions(choice, name=self._start_name):
             actions = 0
             if isinstance(choice, SimToken):
                 if isinstance(choice.value, tuple) and len(choice.value) > 1:
@@ -32,10 +38,10 @@ class PriorityScheduler:
                         for vals in choice.value:
                             if not isinstance(vals, tuple):
                                 continue
-                            if self._start_name in vals[0]:
+                            if name in vals[0]:
                                 actions += vals[1]
                     else:
-                        if self._start_name in choice.value[0]:
+                        if name in choice.value[0]:
                             actions += choice.value[1]
             return actions
         
@@ -46,22 +52,172 @@ class PriorityScheduler:
             return actions
 
         def grabber(bind):
-            return counter(bind)
+            return (counter(bind),bind)
         
+        # if (len(bindings) > 100):
+        #     queue = self.pool(
+        #         delayed(grabber)(bind) for bind in bindings
+        #     )
+        # else:
+        queue = [
+            grabber(bind) for bind in bindings
+        ]
         
         self.log("sorting...")
-        queue = sorted(bindings, key=grabber, reverse=True)
-        top_action = grabber(queue[0])
+        queue = sorted(queue, key=lambda x: x[0], reverse=True)
+        top_action = queue[0][0]
         self.log(f"selection for {top_action}...")
         top_choices = [ ]
         if top_action == 0:
-            top_choices = queue
+            top_choices = bindings
         else:
-            for choice in queue:
-                count = grabber(choice)
+            for (count, choice) in queue:
                 if count < top_action:
                     break
                 top_choices.append(choice)
         selected = random_choice(top_choices)
         self.log(f"selected one from {len(top_choices)}...")
         return selected
+    
+class ParallelSimProblem(SimProblem):
+    """
+    An attempt to speed up steps by taking advantage of the inherent
+    parallism needed to process tasks
+    """
+
+    def __init__(self, debugging=True, binding_priority=lambda bindings: bindings[0]):
+        super().__init__(debugging, binding_priority)
+        
+    def event_bindings(self, event):
+        """
+        Calculates the set of bindings that enables the given event.
+        Each binding is a tuple ([(place, token), (place, token), ...], time) that represents a single enabling binding.
+        A binding is
+        a possible token combination (see token_combinations), for which the event's
+        guard function evaluates to True. In case there is no guard function, any combination is also a binding.
+        The time is the time at which the latest token is available.
+        For example, if a event has incoming SimVar a and b with tokens 1@2 on a and 2@3, 3@1 on b,
+        the possible bindings are ([(a, 1@2), (b, 2@3)], 3) and ([(a, 1@2), (b, 3@1)], 2)
+
+        :param event: the event for which to calculate the enabling bindings.
+        :return: list of tuples ([(place, token), (place, token), ...], time)
+        """
+        nr_incoming_places = len(event.incoming)
+        if nr_incoming_places == 0:
+            raise Exception("Though it is strictly speaking possible, we do not allow events like '" + str(self) + "' without incoming arcs.")
+
+        bindings = [[]]
+        place_token_products = [
+            list(product([place], [ tok  for tok  in place.marking ]))
+            for place in event.incoming
+        ]
+        bindings = product(*place_token_products)
+        
+        def handle(binding):
+            variable_values = []
+            time = None
+            for (place, token) in binding:
+                if (event.guard is not None):
+                    variable_values.append(token.value)
+                if time is None or token.time > time:
+                    time = token.time
+            return (binding, time, variable_values)
+
+        # a binding must have all incoming places
+        
+        new_bindings = [
+            handle(binding)
+            for binding in bindings
+            if len(binding) == nr_incoming_places
+        ]
+        bindings = new_bindings
+
+        # if a event has a guard, only bindings are enabled for which the guard evaluates to True
+        if event.guard is not None:
+            result = [
+                (binding, time)
+                for (binding, time, variable_values)
+                in new_bindings
+                if event.guard(*variable_values)
+            ]
+        else :
+            result = [
+                (binding, time)
+                for (binding, time, _)
+                in new_bindings
+            ]
+
+        # result = []
+        # for binding in bindings:
+        #     variable_values = []
+        #     time = None
+        #     for (place, token) in binding:
+        #         variable_values.append(token.value)
+        #         if time is None or token.time > time:
+        #             time = token.time
+        #     enabled = True
+        #     if event.guard is not None:
+        #         try:
+        #             enabled = event.guard(*variable_values)
+        #         except Exception as e:
+        #             raise TypeError("Event " + event + ": guard generates exception for values " + str(variable_values) + ".") from e
+        #     if enabled:
+        #         result.append((binding, time))
+
+        return result
+
+    def bindings(self):
+        """
+        Calculates the set of timed bindings that is enabled over all events in the problem.
+        Each binding is a tuple ([(place, token), (place, token), ...], time, event) that represents a single enabling binding.
+        If no timed binding is enabled at the current clock time, updates the current clock time to the earliest time at which there is.
+        :return: list of tuples ([(place, token), (place, token), ...], time, event)
+        """
+        timed_bindings = []
+        min_enabling_time = None
+
+        for t in self.events:
+            for (binding, time) in self.event_bindings(t):
+                if (time <= self.clock):
+                    timed_bindings.append((binding, time, t))
+                if min_enabling_time is None or time < min_enabling_time:
+                    min_enabling_time = time
+
+        # timed bindings are only enabled if they have time <= clock
+        # if there are no such bindings, set the clock to the earliest time at which there are
+        if min_enabling_time is not None and min_enabling_time > self.clock:
+            self.clock = min_enabling_time
+            # We now also need to update the bindings, because the SimVarTime may have changed and needs to be updated.
+            # TODO This is inefficient, because we are recalculating all bindings, while we only need to recalculate the ones that have SimVarTime in their inflow.
+            timed_bindings = [] 
+            for t in self.events:
+                for (binding, time) in self.event_bindings(t):
+                    if (time <= self.clock):
+                        timed_bindings.append((binding, time, t))
+        # now return the untimed bindings + the timed bindings that have time <= clock
+        return timed_bindings
+    
+    def step(self):
+        """
+        Executes a single step of the simulation.
+        If multiple events can happen, one is selected at random.
+        Returns the binding that happened, or None if no event could happen.
+        """
+        start = now()
+        bindings = self.bindings()
+        end = now() - start 
+        print(f"bindings took {end:0.4f}s")
+        
+        if len(bindings) > 0:
+            start = now()
+            timed_binding = self.binding_priority(bindings)
+            end = now() - start 
+            print(f"priority took {end:0.4f}s")
+            start = now()
+            self.fire(timed_binding)
+            end = now() - start 
+            print(f"firing took {end:0.4f}s")
+            return timed_binding
+        return None
+
+    

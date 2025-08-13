@@ -31,6 +31,18 @@ easier. I might take these a step further and have a single wrapper class
 and introduce a type name to make it happen once I have gone through all the
 prototypes from `simpn.prototypes` related to BPMN.
 
+### Blockers
+
+Performance for my simulations with lots of tokens is not particularly good,
+at the scale I am aiming for. Unforntunately, my attempts with joblib were
+not meet with any gains. There does seem to be safe inherent parallism but
+GIL prevents me from grabbing any of it. Some minor changes to avoid `list.append`
+of a speed of 2~1.5 though.
+
+Previous state:
+![flamegraph of previous pain](./tut-bpmn-02-prof.svg)
+Current state:
+![flamegraph of pain](./tut-bpmn-02-prof-c.svg)
 ### Pre-robodebt
 
 I have been playing around with the initial phase of the pre-robodebt process. The sim file for this initial phase is [tut-bpmn-01.py](./tut-bpmn-01.py).

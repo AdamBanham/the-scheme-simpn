@@ -1,9 +1,11 @@
-from simpn.simulator import SimProblem, SimToken
+from simpn.simulator import SimToken
 from visualisation import Visualisation
 from bpmn import HelperBPMNTask, HelperBPMNStart
 from bpmn import HelperBPMNExclusiveSplit, HelperBPMNIntermediateEvent
 from bpmn import HelperBPMNEnd, HelperBPMNExclusiveJoin
 from util import PriorityScheduler
+from util import ParallelSimProblem as SimProblem
+
 
 from math import exp
 from random import uniform, choice as random_choice
