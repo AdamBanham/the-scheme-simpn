@@ -33,24 +33,57 @@ prototypes from `simpn.prototypes` related to BPMN.
 
 ### Blockers
 
-Performance for my simulations with lots of tokens is not particularly good,
-at the scale I am aiming for. Unforntunately, my attempts with joblib were
+Performance for my simulations with lots of tokens is not particularly good so aiming for simulating one million tokens might be far off. Unfortunately, my attempts with joblib were
 not meet with any gains. There does seem to be safe inherent parallism but
 GIL prevents me from grabbing any of it. Some minor changes to avoid `list.append`
-of a speed of 2~1.5 though.
+of a speed of 1.2~1.5 though.
+
+For testing I am simulating up to a duration of 5 on tut-bpmn-02.py.
 
 Previous state:
+times: `(14,10,11,10,11)` = avg of `11.2`
 ![flamegraph of previous pain](./tut-bpmn-02-prof.svg)
+
 Current state:
+times: `(9+9+8.8+9.6+9)` = avg of `9.08`
+speed up: `11.2/9.08` = `1.2`
 ![flamegraph of pain](./tut-bpmn-02-prof-c.svg)
+
+#### Further steps
+
+I could look into making so that `SimProblem` always knows when the next step should be. By having tracker on tokens and their times, I could remove the following block from bindings, which is searching for the min_enabling_time:
+```python
+timed_bindings = []
+min_enabling_time = None
+
+for t in self.events:
+    for (binding, time) in self.event_bindings(t):
+        if (time <= self.clock):
+            timed_bindings.append((binding, time, t))
+        if min_enabling_time is None or time < min_enabling_time:
+            min_enabling_time = time
+```
+Perphas replacing it with something like this and only doing the second loop:
+```python
+if self.enabling_step_back_needed():
+  self.clock = self.min_enabling_step()
+timed_bindings = [] 
+for t in self.events:
+    for (binding, time) in self.event_bindings(t):
+        if (time <= self.clock):
+            timed_bindings.append((binding, time, t))
+```
+
+
 ### Pre-robodebt
 
-I have been playing around with the initial phase of the pre-robodebt process. The sim file for this initial phase is [tut-bpmn-01.py](./tut-bpmn-01.py).
+I have been playing around with the initial phase of the pre-robodebt process. The sim file for this initial phase `outreach` is [tut-bpmn-01.py](./tut-bpmn-01.py).
 
 ![demo of sim](./output-000.gif)
 
 Played around with modeling the second phase, extended outreach,
 I found I was still playing around plumbing for simvars. I think adding a way to say a var and it being made for me would be helpful.
+the sim file for the `extended outreach` phase is [tut-bpmn-02.py](./tut-bpmn-02.py)
 
 ![demo of phase#2](./output-001.gif)
 
