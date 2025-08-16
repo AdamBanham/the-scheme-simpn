@@ -410,10 +410,6 @@ class Visualisation:
                 self.__screen.blit(label, (text_x_pos, text_y_pos))
                 y+= (label.get_height() / self._zoom_level)
 
-        
-
-        
-
     def action_step(self):
         t = time()
         for s in range(self._speed):
@@ -423,7 +419,6 @@ class Visualisation:
         self._speed_complete = s + 1
         self._speed_time = int((time() - t) * 1000)
 
-    
     def __init_buttons(self):
         # No buttons for now.
         # btn_step = Button()        
@@ -525,6 +520,14 @@ class Visualisation:
             x, y = node.get_pos()
             node.set_pos((x + offset_x, y + offset_y))
 
+    def set_speed(self, speed):
+        """
+        Sets the maximum speed of simulating the problem per draw tick.
+
+        Note that simulation steps (one increment of speed) only occur 
+        if the last draw was less then 50ms ago.
+        """
+        self._speed = max(1, speed)
 
     def save_layout(self, filename):
         """

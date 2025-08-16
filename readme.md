@@ -31,6 +31,100 @@ easier. I might take these a step further and have a single wrapper class
 and introduce a type name to make it happen once I have gone through all the
 prototypes from `simpn.prototypes` related to BPMN.
 
+### Aesthetics
+
+When working with the intial examples from simpn, I found myself fighting
+with the plumbing of setting up a simulation. Perphas there was also a large
+amount of my personal perferences for functional or declarative paradigms  influencing these statements as well, but I wanted to simplify writing/reading simulations.
+
+An example of an as-is set of instructions to make a simulation for a single
+task consists of the following
+
+```python
+...
+problem = SimProblem()
+
+p1 = problem.add_place("p1")
+p2 = problem.add_place("p2")
+r = problem.add_place("resources")
+for i in range(3):
+    r.put(f"resource-{i+1}")
+...
+def behaviour(c,r):
+    return [
+        SimToken((c,r), delay=uniform(1,4))
+    ]
+task = BPMNTask(
+    problem,
+    [p1,r],
+    [p2,r],
+    "Task A",
+    behaviour
+)
+...
+```
+See [`aesthetics-a.py`](./aesthetics-a.py) for the complete example.
+
+I did not like that I had to instantiate the class and would never afterwards
+use the instances. Seems a bit pointless and annoying. Similarly, it would be
+nice to reuse the name `behaviour` for bpmn-tasks to keep the cognitive load
+lower for reading a sim file. Noting that there are other similar names for 
+splits and events that would be nice to keep. 
+So I made a bunch of helper classes that shortcuted the work to instaniate 
+the classes from `simpn.prototypes` for bpmn elements. An example of one of
+these from [`bpmn.py`](./bpmn.py) is shown below.
+
+```python
+...
+class Start(BPMN):
+    type="start"
+    model=prob
+    name="Started"
+    outgoing=["p1"]
+
+    def interarrival_time():
+        return pick_time(3)
+    
+class Resources(BPMN):
+    type="resource-pool"
+    model=prob 
+    name="resources"
+    amount=5
+
+class Task(BPMN):
+    type="task"
+    model=prob
+    name="task-1"
+    incoming=["p1", "resources"]
+    outgoing=["p2", "resources"]
+
+    def behaviour(c, r):
+        return [ SimToken((c,r), delay=pick_time(5)) ]
+...
+```
+See [`aesthetics-b.py`](./aesthetics-b.py) for the full example, showing all the helpers 
+implemented.
+
+By tapping into the `__init_subclass__` hook on the class we can write a 
+shortcut to handle creating the class for us. As well as checking for the 
+needed attributes. Is there any real difference in terms of lines of code?
+Not really, but it does mean for all tasks I define behaviour and always that
+name. Which makes it a bit simplier to remember when making the simulation
+and for when I start making code-snippets. To avoid typos, I have added type 
+hints to avoid messing up the `type` of these classes, which is used to 
+handling the routing towards the wanted helper class. Likewise, now I just 
+say a place name and the help handles the lookup and creation. But, does 
+introduce a chance that you include a typo, but you can still just drop 
+in a known SimVar value instead of a string.
+
+Another aesthetics touch I have been playing around with the actual 
+visualisation as well. Notably, I have been building a mirror of the default
+pygame interface in [`visualisation.py`](./visualisation.py). See below for
+a demonstration.
+
+![demo of visualisation](./aesthetics-001-b.gif)
+
+
 ### Blockers
 
 Performance for my simulations with lots of tokens is not particularly good so aiming for simulating one million tokens might be far off. Unfortunately, my attempts with joblib were

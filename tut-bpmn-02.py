@@ -1,13 +1,10 @@
 from simpn.simulator import SimToken
 from simpn.simulator import SimProblem
 from visualisation import Visualisation
-from bpmn import HelperBPMNTask, HelperBPMNStart
-from bpmn import HelperBPMNExclusiveSplit, HelperBPMNIntermediateEvent
-from bpmn import HelperBPMNEnd, HelperBPMNExclusiveJoin
-from util import PriorityScheduler
+from bpmn import BPMN
+from util import PriorityScheduler, pick_time
 from util import ParallelSimProblem as  SimProblem
 
-from math import exp
 from random import uniform, choice as random_choice
 from os.path import join 
 from sys import argv
@@ -28,9 +25,12 @@ def work():
         print("missing argument for number of agents, using default of 25.")
     else:
         AGENTS = int(argv[1])
-    dhs = shop.add_var("DHS Agents")
-    for i in range(AGENTS):
-        dhs.put(f"dhs-{i+1}")
+
+    class DHS(BPMN):
+        type="resource-pool"
+        model=shop
+        name="dhs"
+        amount=AGENTS
 
     c1 = shop.add_var("exclusive-choice-1")
     r1 = shop.add_var("recipient initially responds")
@@ -50,7 +50,8 @@ def work():
     responded = shop.add_var("responded")
     nonrespond = shop.add_var("nonrespond")
 
-    class InterventionLoaded(HelperBPMNStart):
+    class InterventionLoaded(BPMN):
+        type="start"
         model = shop
         outgoing = [c1]
         name = "Notice Issued"
@@ -58,7 +59,8 @@ def work():
         def interarrival_time():
             return DURATION / BACKLOG
         
-    class RecipientResponse1(HelperBPMNExclusiveSplit):
+    class RecipientResponse1(BPMN):
+        type="gat-ex-split"
         model = shop 
         incoming = [c1]
         outgoing = [r1,d1]
@@ -75,7 +77,8 @@ def work():
             else:
                 return [None, SimToken(c)]
             
-    class WaitFor21Days(HelperBPMNIntermediateEvent):
+    class WaitFor21Days(BPMN):
+        type="event"
         model = shop 
         incoming = [d1] 
         outgoing = [t1s]
@@ -88,10 +91,11 @@ def work():
                 c = (c[0], 1)
             return [SimToken(c, delay=21 * 24)]
         
-    class CheckingForActive(HelperBPMNTask):
+    class CheckingForActive(BPMN):
+        type="task"
         model = shop 
-        incoming = [t1s, dhs]
-        outgoing = [c2, dhs]
+        incoming = [t1s, "dhs"]
+        outgoing = [c2, "dhs"]
         name = "Check for active payments"
 
         def behaviour(c, r):
@@ -99,12 +103,13 @@ def work():
                 c = (c[0], c[1]+1)
             else:
                 c = (c[0], 1)
-            return [SimToken((c,r), delay=exp(1/2))]
+            return [SimToken((c,r), delay=pick_time(2))]
 
-    class RecipientCalls(HelperBPMNIntermediateEvent):
+    class RecipientCalls(BPMN):
+        type="event"
         model = shop 
-        incoming = [r1, dhs]
-        outgoing = [j1a, dhs]
+        incoming = [r1, "dhs"]
+        outgoing = [j1a, "dhs"]
         name = "Recipient calls DHS"
 
         def behaviour(c , r):
@@ -112,9 +117,14 @@ def work():
                 c = (c[0], c[1]+1)
             else:
                 c = (c[0], 1)
-            return [SimToken(c, delay=exp(1/2)), SimToken(r, delay=exp(1/2))]
+            call_time = pick_time(2)
+            return [
+                SimToken(c, delay=call_time), 
+                SimToken(r, delay=call_time)
+            ]
 
-    class HasActivePayments(HelperBPMNExclusiveSplit):
+    class HasActivePayments(BPMN):
+        type="gat-ex-split"
         model = shop 
         incoming = [c2]
         outgoing = [j2a,t2s]
@@ -131,10 +141,11 @@ def work():
             else:
                 return [None, SimToken(c)]
 
-    class SuspendPayments(HelperBPMNTask):
+    class SuspendPayments(BPMN):
+        type="task"
         model = shop 
-        incoming = [t2s, dhs]
-        outgoing = [c3, dhs]
+        incoming = [t2s, "dhs"]
+        outgoing = [c3, "dhs"]
         name = "Suspend payments and hold review"
 
         def behaviour(c, r):
@@ -142,9 +153,10 @@ def work():
                 c = (c[0], c[1]+1)
             else:
                 c = (c[0], 1)
-            return [SimToken((c,r), delay=exp(1/2))]
+            return [SimToken((c,r), delay=pick_time(2))]
         
-    class DoesRecipientRespond2(HelperBPMNExclusiveSplit):
+    class DoesRecipientRespond2(BPMN):
+        type="gat-ex-split"
         model = shop 
         incoming = [c3]
         outgoing = [d2,r2]
@@ -157,11 +169,12 @@ def work():
             else:
                 c = (c[0], 1)
             if pick <= 20:
-                return [SimToken(c), None]
+                return [SimToken(c, delay=14*24), None]
             else:
-                return [None, SimToken(c)]
+                return [None, SimToken(c, pick_time(7*24, 2*24))]
             
-    class Waiting14Days(HelperBPMNIntermediateEvent):
+    class Waiting14Days(BPMN):
+        type="event"
         model = shop 
         incoming = [d2]
         outgoing = [j2b]
@@ -172,12 +185,13 @@ def work():
                 c = (c[0], c[1]+1)
             else:
                 c = (c[0], 1)
-            return [SimToken((c), delay=14*24)]
+            return [SimToken((c))]
         
-    class RecipientCallsIn(HelperBPMNIntermediateEvent):
+    class RecipientCallsIn(BPMN):
+        type="event"
         model = shop 
-        incoming = [r2, dhs]
-        outgoing = [t3s, dhs]
+        incoming = [r2, "dhs"]
+        outgoing = [t3s, "dhs"]
         name = "Recipient Calls In"
 
         def behaviour(c, r):
@@ -185,12 +199,17 @@ def work():
                 c = (c[0], c[1]+1)
             else:
                 c = (c[0], 1)
-            return [SimToken(c, delay=exp(1/2)), SimToken(r, delay=exp(1/2))]
+            call_time = pick_time(2)
+            return [
+                SimToken(c, delay=call_time), 
+                SimToken(r, delay=call_time)
+            ]
         
-    class RestorePayments(HelperBPMNTask):
+    class RestorePayments(BPMN):
+        type="task"
         model = shop 
-        incoming = [t3s, dhs]
-        outgoing = [j1b, dhs]
+        incoming = [t3s, "dhs"]
+        outgoing = [j1b, "dhs"]
         name = "Restore payments"
 
         def behaviour(c, r):
@@ -198,26 +217,30 @@ def work():
                 c = (c[0], c[1]+1)
             else:
                 c = (c[0], 1)
-            return [SimToken((c,r), delay=exp(1/2))]
+            return [SimToken((c,r), delay=pick_time(2))]
         
-    class ExclusiveJoin2(HelperBPMNExclusiveJoin):
+    class ExclusiveJoin2(BPMN):
+        type="gat-ex-join"
         model = shop 
         incoming = [j1a, j1b]
         outgoing = [responded]
         name = "Join-2"
 
-    class ExclusiveJoin(HelperBPMNExclusiveJoin):
+    class ExclusiveJoin(BPMN):
+        type="gat-ex-join"
         model = shop 
         incoming = [j2a, j2b]
         outgoing = [nonrespond]
         name = "Join-1"
 
-    class RecipientResponded(HelperBPMNEnd):
+    class RecipientResponded(BPMN):
+        type="end"
         model = shop 
         incoming = [responded]
         name = "Recipient responded"
 
-    class RecipientResponded(HelperBPMNEnd):
+    class RecipientResponded(BPMN):
+        type="end"
         model = shop 
         incoming = [nonrespond]
         name = "Recipient did not responded"
@@ -230,7 +253,8 @@ def work():
     vis = Visualisation(shop,
                         layout_algorithm="auto",
                         layout_file=LAYOUT_FILE,
-                        record=False)
+                        record=True)
+    vis.set_speed(20)
     vis.show()
     vis.save_layout(LAYOUT_FILE)
 
