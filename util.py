@@ -21,14 +21,26 @@ def pick_time(normally, dev=None) -> float:
         normalvariate(normally, dev)
     )
 
+def increment_priority(tok_values):
+    """
+    Increments the values of a token so the scheduler prioritise it more.
+    """
+    if len(tok_values) > 1:
+        tok_values = (tok_values[0], tok_values[1]+1)
+    else:
+        tok_values = (tok_values[0], 1)
+    return tok_values
+
 class PriorityScheduler:
     
-    def __init__(self, start_name):
+    def __init__(self, start_name, debug=False):
         self._start_name = start_name 
         self.pool = Parallel(n_jobs=-2)
+        self._debug = debug
 
     def log(self, msg):
-        print(f"PriorityScheduler::{msg}")
+        if (self._debug):
+            print(f"PriorityScheduler::{msg}")
 
     def __call__(self, bindings, *args, **kwds):
 

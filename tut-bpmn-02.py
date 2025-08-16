@@ -2,7 +2,7 @@ from simpn.simulator import SimToken
 from simpn.simulator import SimProblem
 from visualisation import Visualisation
 from bpmn import BPMN
-from util import PriorityScheduler, pick_time
+from util import PriorityScheduler, pick_time, increment_priority
 from util import ParallelSimProblem as  SimProblem
 
 from random import uniform, choice as random_choice
@@ -68,10 +68,7 @@ def work():
 
         def choice(c):
             pick = uniform(1, 100)
-            if len(c) > 1:
-                c = (c[0], c[1]+1)
-            else:
-                c = (c[0], 1)
+            c = increment_priority(c)
             if pick <= 20:
                 return [SimToken(c), None]
             else:
@@ -85,10 +82,7 @@ def work():
         name = "21 Days"
 
         def behaviour(c):
-            if len(c) > 1:
-                c = (c[0], c[1]+1)
-            else:
-                c = (c[0], 1)
+            c = increment_priority(c)
             return [SimToken(c, delay=21 * 24)]
         
     class CheckingForActive(BPMN):
@@ -99,10 +93,7 @@ def work():
         name = "Check for active payments"
 
         def behaviour(c, r):
-            if len(c) > 1:
-                c = (c[0], c[1]+1)
-            else:
-                c = (c[0], 1)
+            c = increment_priority(c)
             return [SimToken((c,r), delay=pick_time(2))]
 
     class RecipientCalls(BPMN):
@@ -113,10 +104,7 @@ def work():
         name = "Recipient calls DHS"
 
         def behaviour(c , r):
-            if len(c) > 1:
-                c = (c[0], c[1]+1)
-            else:
-                c = (c[0], 1)
+            c = increment_priority(c)
             call_time = pick_time(2)
             return [
                 SimToken(c, delay=call_time), 
@@ -132,10 +120,7 @@ def work():
 
         def choice(c):
             pick = uniform(1, 100)
-            if len(c) > 1:
-                c = (c[0], c[1]+1)
-            else:
-                c = (c[0], 1)
+            c = increment_priority(c)
             if pick <= 20:
                 return [SimToken(c), None]
             else:
@@ -149,10 +134,7 @@ def work():
         name = "Suspend payments and hold review"
 
         def behaviour(c, r):
-            if len(c) > 1:
-                c = (c[0], c[1]+1)
-            else:
-                c = (c[0], 1)
+            c = increment_priority(c)
             return [SimToken((c,r), delay=pick_time(2))]
         
     class DoesRecipientRespond2(BPMN):
@@ -164,10 +146,7 @@ def work():
 
         def choice(c):
             pick = uniform(1, 100)
-            if len(c) > 1:
-                c = (c[0], c[1]+1)
-            else:
-                c = (c[0], 1)
+            c = increment_priority(c)
             if pick <= 20:
                 return [SimToken(c, delay=14*24), None]
             else:
@@ -181,10 +160,7 @@ def work():
         name = "14 days"
 
         def behaviour(c):
-            if len(c) > 1:
-                c = (c[0], c[1]+1)
-            else:
-                c = (c[0], 1)
+            c = increment_priority(c)
             return [SimToken((c))]
         
     class RecipientCallsIn(BPMN):
@@ -195,10 +171,7 @@ def work():
         name = "Recipient Calls In"
 
         def behaviour(c, r):
-            if len(c) > 1:
-                c = (c[0], c[1]+1)
-            else:
-                c = (c[0], 1)
+            c = increment_priority(c)
             call_time = pick_time(2)
             return [
                 SimToken(c, delay=call_time), 
@@ -213,10 +186,7 @@ def work():
         name = "Restore payments"
 
         def behaviour(c, r):
-            if len(c) > 1:
-                c = (c[0], c[1]+1)
-            else:
-                c = (c[0], 1)
+            c = increment_priority(c)
             return [SimToken((c,r), delay=pick_time(2))]
         
     class ExclusiveJoin2(BPMN):
@@ -253,7 +223,7 @@ def work():
     vis = Visualisation(shop,
                         layout_algorithm="auto",
                         layout_file=LAYOUT_FILE,
-                        record=True)
+                        record=False)
     vis.set_speed(20)
     vis.show()
     vis.save_layout(LAYOUT_FILE)

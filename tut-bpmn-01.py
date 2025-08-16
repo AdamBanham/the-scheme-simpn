@@ -1,7 +1,7 @@
 from simpn.simulator import SimToken
 from visualisation import Visualisation
 from bpmn import BPMN
-from util import PriorityScheduler, pick_time
+from util import PriorityScheduler, pick_time, increment_priority
 from util import ParallelSimProblem as SimProblem
 
 from random import uniform, choice as random_choice
@@ -71,10 +71,7 @@ class GenerateDiscrepancy(BPMN):
     name = "Generate Discrepancy"
 
     def behaviour(c, r):
-        if len(c) > 1:
-            c = (c[0], c[1]+1)
-        else:
-            c = (c[0], 1)
+        c = increment_priority(c)
         return [SimToken((c, r), delay=pick_time(3))]
 
 
@@ -86,10 +83,7 @@ class ContactRecipient(BPMN):
     name = "Contact Recipient"
 
     def behaviour(c, r):
-        if len(c) > 1:
-            c = (c[0], c[1]+1)
-        else:
-            c = (c[0], 1)
+        c = increment_priority(c)
         delay = pick_time(3)
         return [
             SimToken(c, delay=delay), 
@@ -104,10 +98,7 @@ class RecipientResponds(BPMN):
     name = "Recipient responds"
 
     def behaviour(c, r):
-        if len(c) > 1:
-            c = (c[0], c[1]+1)
-        else:
-            c = (c[0], 1)
+        c = increment_priority(c)
         delay = pick_time(2)
         return [
             SimToken(c, delay=delay), 
@@ -122,10 +113,7 @@ class UnableToContact(BPMN):
     name = "Unable to contact"
 
     def behaviour(c,):
-        if len(c) > 1:
-            c = (c[0], c[1]+1)
-        else:
-            c = (c[0], 1)
+        c = increment_priority(c)
         return [SimToken(c),]
     
 class RecipientContactChoice(BPMN):
@@ -153,10 +141,7 @@ class GenerateContactNotice(BPMN):
     name = "Generate Contact Notice"
 
     def behaviour(c, r):
-        if len(c) > 1:
-            c = (c[0], c[1]+1)
-        else:
-            c = (c[0], 1)
+        c = increment_priority(c)
         return [
             SimToken(
                 (c,r), delay=pick_time(2)
@@ -192,10 +177,7 @@ class IssueNotice(BPMN):
     name = "Issue Notice"
 
     def behaviour(c, r):
-        if len(c) > 1:
-            c = (c[0], c[1]+1)
-        else:
-            c = (c[0], 1)
+        c = increment_priority(c)
         return [SimToken((c, r), delay=pick_time(1))]
 
 vis = Visualisation(shop,

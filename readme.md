@@ -176,15 +176,40 @@ for the scheme, which had a backlog of roughly 1,000,000 cases per year.
 
 ### Pre-robodebt
 
-I have been playing around with the initial phase of the pre-robodebt process. The sim file for this initial phase `outreach` is [tut-bpmn-01.py](./tut-bpmn-01.py).
+I have been playing around with the initial phase of the pre-robodebt process. 
+The sim file for this initial phase `outreach` is 
+[tut-bpmn-01.py](./tut-bpmn-01.py).
+It was a bit annoying to made with the default simpn patterns, but completely
+possible.
 
 ![demo of sim](./output-000.gif)
 
-Played around with modeling the second phase, extended outreach,
-I found I was still playing around plumbing for simvars. I think adding a way to say a var and it being made for me would be helpful.
-the sim file for the `extended outreach` phase is [tut-bpmn-02.py](./tut-bpmn-02.py)
+Played around with modeling the second phase was optional and called
+`extended outreach`, I found I was still playing around plumbing for simvars.
+I think adding a way to say a var and it being made for me would be helpful.
+The sim file for the `extended outreach` phase is 
+[tut-bpmn-02.py](./tut-bpmn-02.py)
 
 ![demo of phase#2](./output-001.gif)
+
+The third phase modelled for this iteration of the scheme was `confirmation`.
+After making some code snippets to generate the boilerplates for the main 
+helper class, I felt like I was just focusing on the modelling. The sim file
+for this phase is [tut-bpmn-03.py](./tut-bpmn-03.py).
+
+![demo of phase#3](./output-002.gif)
+
+The fourth phase was for this iteration of the scheme was optional and 
+called `third-party collection`. The snippets really felt good...this seems 
+like a slippery slope to go down. the sim file for this phase can be found in
+[tut-bpmn-04.py](./tut-bpmn-04.py).
+
+![demo of phase#4](./output-003.gif)
+
+The fifth phase for this iteration of the scheme was `entitlement assessment`.
+The sim file for this phase can be found in [tut-bpmn-05.py](./tut-bpmn-05.py).
+
+![demo of phase#5](./output-004.gif)
 
 ### OCI
 

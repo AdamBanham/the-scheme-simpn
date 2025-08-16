@@ -1,0 +1,35 @@
+version 2.0
+1.6578265696311825
+3440,1417
+third-party-collection,300,150
+Generate employer information notice,300,650
+Issue notice to employer,500,400
+Does the employer respond?,700,150
+Employer returns documents,700,650
+Employer Misses Deadline,850,250
+Contact Employer to discuss notice,850,550
+Can or will the employer provide information?,1150,150
+Collect information verbally from employer,1300,400
+Collected from employer,1300,650
+Generate ATO request notice,1500,150
+Issue ATO notice,1500,400
+ATO returns documents,1700,550
+documents aquired,1850,400
+Collection completed,1850,150
+dhs,1000,400
+information required,300,400
+notice gen,500,650
+notice sent,500,150
+employer nonresponse,850,150
+employer responds,700,400
+employer returned documents,1000,650
+employer deadline missed,850,400
+contacted employer,1150,550
+employer will provide,1300,250
+employer will not provide,1350,150
+employer verbally collected,1300,550
+completed employer path,1850,650
+ato notice gen,1500,250
+ato notice issued,1500,550
+ato path completed,1700,400
+collection done,1850,250
