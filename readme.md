@@ -5,8 +5,8 @@ simulating a process modelled in BPMN.
 
 ## Goals
 
-- Simulate the two phases of the process
-    - pre-robodebt
+- Simulate the two iterations of the scheme
+    - pre-scheme
     - oci 
 - Work out a way to make the resulting simulation data presentable via 
   a web interface 
@@ -158,7 +158,10 @@ for t in self.events:
         if min_enabling_time is None or time < min_enabling_time:
             min_enabling_time = time
 ```
-Perphas replacing it with something like this and only doing the second loop:
+Perphas replacing it with something like this and only doing the second loop
+within `event_bindings`. Perphas moving/droppping the complexity to O(n) vs
+O(2n). Though keeping track of `min` and maybe the `max` will likely involve
+some sorting algo...or maybe a binary search tree or use `heapq` in stdlib.
 ```python
 if self.enabling_step_back_needed():
   self.clock = self.min_enabling_step()
@@ -168,15 +171,66 @@ for t in self.events:
         if (time <= self.clock):
             timed_bindings.append((binding, time, t))
 ```
+Turns out that a sorted collection from `sortedcollections`
+is being used at the lower SimVar level. This means that we can always
+quickly grab the value, making the first loop somewhat wasteful. 
+So, I ended up writing the following to replace the first loop:
+```python
+min_enabling_time = None
+
+# find the smallest largest enabling time for an event's
+# incoming markings
+for ev in self.events:
+    smallest = []
+    skip = False
+    added = False
+
+    for place in ev.incoming:
+        try:
+            smallest.append(place.marking[0].time)
+            added = True
+        except:
+            skip = True
+    
+    if (skip or not added):
+        continue
+
+    smallest_largest = max(smallest)
+
+    if (smallest_largest == 0):
+        continue
+    
+    # keep track of the smallest next possible clock
+    if (smallest_largest is not None) and (min_enabling_time is None or smallest_largest < min_enabling_time):
+        min_enabling_time = smallest_largest 
+```
+As we need only find the largest non-zero smallest token time for each 
+event's incoming places.
+
+Testing consisted of running tut-bpmn-02.py for a duration of 8 with 25 
+agents. 8 was selected as it represents a day.
+
+simpn.simulator.SimProblem:- `86+85+84.5+84.5+82.4 = 422.4` or `84.48` on avg.
+
+util.ParallelSimProblem:- `43.1+42.7+45.9+44.5+45.2 = 221.4` or `44.28` on avg
+
+Speed up:- `84.48/44.28 = 1.91`. Nice close to the 2.0 to be expected from 
+dropping the major iteration of `event_bindings`.
+
 
 ## Simulation of the Scheme
 
 This section outlines the work to simulate the BPMN 2.0 models derived
-for the scheme, which had a backlog of roughly 1,000,000 cases per year.
+for the scheme, which had a backlog of roughly 1,000,000 cases per year. 
+Assuming that the agents of DHS were salaried, then the amount of business
+hours one could expect from a single agent in a year could be estimated as
+`2270` hours<sup><a href="#ref1">1</a></sup>. The arrival rate will then be
+business hours in a year divided by cases for the simulations, or a new case 
+every `8.172` seconds.
 
-### Pre-robodebt
+### Pre-Scheme
 
-I have been playing around with the initial phase of the pre-robodebt process. 
+I have been playing around with the initial phase of the pre-scheme process. 
 The sim file for this initial phase `outreach` is 
 [tut-bpmn-01.py](./tut-bpmn-01.py).
 It was a bit annoying to made with the default simpn patterns, but completely
@@ -214,3 +268,10 @@ The sim file for this phase can be found in [tut-bpmn-05.py](./tut-bpmn-05.py).
 ### OCI
 
 No modeling at the moment.
+
+### References
+<ol>
+  <li id="ref1">
+    https://kangarooedu.au/blogs/how-many-working-hours-in-a-year/
+  </li>
+</ol>

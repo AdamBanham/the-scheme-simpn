@@ -1,9 +1,13 @@
+from random import seed
+seed(42)
+
 from simpn.simulator import SimToken
 from visualisation import Visualisation
 from bpmn import BPMN
 from util import PriorityScheduler, pick_time, increment_priority
 from util import ParallelSimProblem as SimProblem
 
+from simsettings import AGENTS, BACKLOG, DURATION
 from random import uniform, choice as random_choice
 from os.path import join 
 from sys import argv
@@ -14,9 +18,6 @@ shop = SimProblem(
     binding_priority=PriorityScheduler("Intervention Loaded")
 )
 
-AGENTS = 25
-BACKLOG = 1000000
-DURATION = 8760
 if (len(argv) < 2):
     print("missing argument for number of agents, using default of 25.")
 else:

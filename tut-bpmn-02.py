@@ -1,3 +1,6 @@
+from random import seed
+seed(42)
+
 from simpn.simulator import SimToken
 from simpn.simulator import SimProblem
 from visualisation import Visualisation
@@ -10,6 +13,9 @@ from os.path import join
 from sys import argv
 from time import time
 
+TESTING = False
+T_DURATION = 8
+
 def work():
 
     LAYOUT_FILE = join(".", "tut-bpmn-02.layout")
@@ -18,9 +24,8 @@ def work():
         binding_priority=PriorityScheduler("Notice Issued")
     )
 
-    AGENTS = 25
-    BACKLOG = 1000000
-    DURATION = 8760
+    from simsettings import DURATION, BACKLOG, AGENTS
+
     if (len(argv) < 2):
         print("missing argument for number of agents, using default of 25.")
     else:
@@ -70,9 +75,9 @@ def work():
             pick = uniform(1, 100)
             c = increment_priority(c)
             if pick <= 20:
-                return [SimToken(c), None]
+                return [SimToken(c, delay=pick_time(7 * 8, 2 * 8)), None]
             else:
-                return [None, SimToken(c)]
+                return [None, SimToken(c, delay=21 * 8)]
             
     class WaitFor21Days(BPMN):
         type="event"
@@ -83,7 +88,7 @@ def work():
 
         def behaviour(c):
             c = increment_priority(c)
-            return [SimToken(c, delay=21 * 24)]
+            return [SimToken(c, delay=0.01)]
         
     class CheckingForActive(BPMN):
         type="task"
@@ -148,9 +153,9 @@ def work():
             pick = uniform(1, 100)
             c = increment_priority(c)
             if pick <= 20:
-                return [SimToken(c, delay=14*24), None]
+                return [SimToken(c, delay=14*8), None]
             else:
-                return [None, SimToken(c, pick_time(7*24, 2*24))]
+                return [None, SimToken(c, pick_time(7*8, 2*8))]
             
     class Waiting14Days(BPMN):
         type="event"
@@ -161,7 +166,7 @@ def work():
 
         def behaviour(c):
             c = increment_priority(c)
-            return [SimToken((c))]
+            return [SimToken(c, delay=0.01)]
         
     class RecipientCallsIn(BPMN):
         type="event"
@@ -215,18 +220,27 @@ def work():
         incoming = [nonrespond]
         name = "Recipient did not responded"
 
-    # start = time()
-    # shop.simulate(5)
-    # end = time() - start 
-    # print(f"simulation finished in {end:0.3f} seconds...")
+    if TESTING:
+        start = time()
+        shop.simulate(T_DURATION)
+        end = time() - start 
+        print(f"simulation finished in {end:0.3f} seconds...")
 
-    vis = Visualisation(shop,
-                        layout_algorithm="auto",
-                        layout_file=LAYOUT_FILE,
-                        record=False)
-    vis.set_speed(20)
-    vis.show()
-    vis.save_layout(LAYOUT_FILE)
+
+        vis = Visualisation(shop,
+                            layout_algorithm="auto",
+                            layout_file=LAYOUT_FILE,
+                            record=False)
+        vis.show()
+
+    else:
+        vis = Visualisation(shop,
+                            layout_algorithm="auto",
+                            layout_file=LAYOUT_FILE,
+                            record=False)
+        vis.set_speed(20)
+        vis.show()
+        vis.save_layout(LAYOUT_FILE)
 
 if __name__ == "__main__":
     work()

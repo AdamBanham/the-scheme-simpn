@@ -1,26 +1,29 @@
-from simpn.simulator import SimToken
+from random import seed 
+seed(42)
+
+from simpn.simulator import SimToken, SimProblem
 from visualisation import Visualisation
-from util import PriorityScheduler, pick_time, ParallelSimProblem
+from util import PriorityScheduler, pick_time
+from util import ParallelSimProblem as SimProblem
 from util import increment_priority
 from bpmn import BPMN
 
+from simsettings import AGENTS, DURATION, BACKLOG
 from os.path import join, exists
 from random import uniform
 from sys import argv
 
 LAYOUT_FILE = join(".","tut-bpmn-05.layout")
-RECORD = False
+RECORD = True
 START_NAME = "entitlement-assessment"
 
-AGENTS = 25
-BACKLOG = 1000000
-DURATION = 8760
+
 if (len(argv) < 2):
     print("missing argument for number of agents, using default of 25.")
 else:
     AGENTS = int(argv[1])
 
-problem = ParallelSimProblem(
+problem = SimProblem(
     binding_priority=PriorityScheduler(START_NAME)
 )
 
@@ -152,6 +155,6 @@ else:
     vis = Visualisation(
         problem, record=RECORD
     )
-vis.set_speed(200)
+vis.set_speed(20)
 vis.show()
 vis.save_layout(LAYOUT_FILE)

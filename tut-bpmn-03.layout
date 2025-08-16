@@ -1,43 +1,43 @@
 version 2.0
-1.4732782369146002
-3440,1417
-confirmation,350,150
-Confirm recipient identity,350,550
-Identity Confirmed?,550,700
-Collect information about discrepancy,550,300
-Provided Additional Information?,1100,150
-Assess Additional information,1450,150
-Is information acceptable and reasonable?,1650,300
-Request support documents,1250,300
-Documents Returned?,1500,450
-Agreed period for documents,1500,700
-Recipient provided documents,1800,450
-Assess returned documents,1650,550
-Are the returned documents acceptable?,1650,800
-information collected,1950,300
-manual-join,1100,700
-signal-join,850,700
-Manual Assessment Required,850,400
-Recipient provided acceptable information,2100,150
-dhs,850,300
-phase started,350,300
-gat-xor-split-1,350,700
-split-1a,550,550
-split-1b,700,700
-collected,550,150
-split-2a,1250,150
-split-2b,1100,550
-assessed,1650,150
-split-3a,1800,300
-split-3b,1450,300
-event-split,1250,450
-missing deadline,1500,550
-documents returning,1650,450
-missed deadline,1250,700
-documents returned,1800,550
-returned assessed,1650,700
-returned accepted,1950,800
-returned rejected,1100,800
-information-collected,1950,150
-manual-joiner,1000,700
-signal-manual,850,550
+1.104
+2274,908
+confirmation,142.391304347826,61.231884057971
+Confirm recipient identity,142.391304347826,461.231884057971
+Identity Confirmed?,342.391304347826,611.231884057971
+Collect information about discrepancy,342.391304347826,211.231884057971
+Provided Additional Information?,892.391304347826,61.231884057971
+Assess Additional information,1242.391304347826,61.231884057971
+Is information acceptable and reasonable?,1442.391304347826,211.231884057971
+Request support documents,1042.391304347826,211.231884057971
+Documents Returned?,1292.391304347826,361.231884057971
+Agreed period for documents,1292.391304347826,611.231884057971
+Recipient provided documents,1592.391304347826,361.231884057971
+Assess returned documents,1442.391304347826,461.231884057971
+Are the returned documents acceptable?,1442.391304347826,711.231884057971
+information collected,1742.391304347826,211.231884057971
+manual-join,892.391304347826,611.231884057971
+signal-join,642.391304347826,611.231884057971
+Manual Assessment Required,642.391304347826,311.231884057971
+Recipient provided acceptable information,1892.391304347826,61.231884057971
+dhs,642.391304347826,211.231884057971
+phase started,142.391304347826,211.231884057971
+gat-xor-split-1,142.391304347826,611.231884057971
+split-1a,342.391304347826,461.231884057971
+split-1b,492.391304347826,611.231884057971
+collected,342.391304347826,61.231884057971
+split-2a,1042.391304347826,61.231884057971
+split-2b,892.391304347826,461.231884057971
+assessed,1442.391304347826,61.231884057971
+split-3a,1592.391304347826,211.231884057971
+split-3b,1242.391304347826,211.231884057971
+event-split,1042.391304347826,361.231884057971
+missing deadline,1292.391304347826,461.231884057971
+documents returning,1442.391304347826,361.231884057971
+missed deadline,1042.391304347826,611.231884057971
+documents returned,1592.391304347826,461.231884057971
+returned assessed,1442.391304347826,611.231884057971
+returned accepted,1742.391304347826,711.231884057971
+returned rejected,892.391304347826,711.231884057971
+information-collected,1742.391304347826,61.231884057971
+manual-joiner,792.391304347826,611.231884057971
+signal-manual,642.391304347826,461.231884057971

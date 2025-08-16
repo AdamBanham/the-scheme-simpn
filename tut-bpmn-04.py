@@ -1,7 +1,12 @@
-from simpn.simulator import SimToken
+from random import seed 
+seed(42)
+
+from simpn.simulator import SimToken, SimProblem
 from visualisation import Visualisation
-from util import PriorityScheduler, pick_time, ParallelSimProblem
+from util import PriorityScheduler, pick_time
+from util import ParallelSimProblem as SimProblem
 from util import increment_priority
+from simsettings import AGENTS, DURATION, BACKLOG
 from bpmn import BPMN
 
 from os.path import join, exists
@@ -12,15 +17,12 @@ LAYOUT_FILE = join(".","tut-bpmn-04.layout")
 RECORD = False
 START_NAME = "third-party-collection"
 
-AGENTS = 25
-BACKLOG = 1000000
-DURATION = 8760
 if (len(argv) < 2):
     print("missing argument for number of agents, using default of 25.")
 else:
     AGENTS = int(argv[1])
 
-problem = ParallelSimProblem(
+problem = SimProblem(
     binding_priority=PriorityScheduler(START_NAME)
 )
 
@@ -72,9 +74,9 @@ class EmployerResponseXorSplit(BPMN):
         c = increment_priority(c)
         pick = uniform(0,100)
         if pick <= 80:
-            return [SimToken(c, delay=14 * 24), None]
+            return [SimToken(c, delay=14 * 8), None]
         else:
-            return [None, SimToken(c, delay=pick_time(7 * 24, 2 * 24))]
+            return [None, SimToken(c, delay=pick_time(7 * 8, 2 * 8))]
 
 class EmployerResponseInterEvent(BPMN):
     type="event"
@@ -177,7 +179,7 @@ class ATOReturnsInterEvent(BPMN):
     outgoing=["ato path completed"]
 
     def behaviour(c):
-        event_time = pick_time(3 * 24)
+        event_time = pick_time(3 * 8)
         return [
             SimToken(c, delay=event_time),
         ]
@@ -204,6 +206,6 @@ else:
     vis = Visualisation(
         problem, record=RECORD
     )
-vis.set_speed(200)
+vis.set_speed(20)
 vis.show()
 vis.save_layout(LAYOUT_FILE)

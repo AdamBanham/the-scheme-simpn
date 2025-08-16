@@ -582,6 +582,9 @@ class Visualisation:
             node.set_pos((new_x, new_y))
         self._selected_nodes = nodes, new_pos
 
+    def start_slow_roll(self):
+        self.__start_slow_roll()
+
     def __start_slow_roll(self):
         self._slow_rolling = True 
         self._slow_move_done = False
