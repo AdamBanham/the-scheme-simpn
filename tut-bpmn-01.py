@@ -202,5 +202,6 @@ vis = Visualisation(shop,
                     layout_algorithm="auto",
                     layout_file=LAYOUT_FILE,
                     record=False)
+vis.set_speed(20)
 vis.show()
 vis.save_layout(LAYOUT_FILE)

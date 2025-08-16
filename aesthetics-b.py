@@ -137,10 +137,9 @@ class End(BPMN):
 
 vis = None
 if (exists(LAYOUT_FILE)):
-    vis = Visualisation(prob, layout_file=LAYOUT_FILE, record=True)
-    vis.show()
-    vis.save_layout(LAYOUT_FILE)
+    vis = Visualisation(prob, layout_file=LAYOUT_FILE, record=False)
 else:
     vis = Visualisation(prob)
-    vis.show()
-    vis.save_layout(LAYOUT_FILE)
+vis.set_speed(2000)
+vis.show()
+vis.save_layout(LAYOUT_FILE)

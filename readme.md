@@ -102,25 +102,26 @@ class Task(BPMN):
         return [ SimToken((c,r), delay=pick_time(5)) ]
 ...
 ```
-See [`aesthetics-b.py`](./aesthetics-b.py) for the full example, showing all the helpers 
-implemented.
+See [`aesthetics-b.py`](./aesthetics-b.py) for the full example, showing 
+all the helpers in action.
 
 By tapping into the `__init_subclass__` hook on the class we can write a 
 shortcut to handle creating the class for us. As well as checking for the 
-needed attributes. Is there any real difference in terms of lines of code?
-Not really, but it does mean for all tasks I define behaviour and always that
-name. Which makes it a bit simplier to remember when making the simulation
-and for when I start making code-snippets. To avoid typos, I have added type 
-hints to avoid messing up the `type` of these classes, which is used to 
-handling the routing towards the wanted helper class. Likewise, now I just 
-say a place name and the help handles the lookup and creation. But, does 
-introduce a chance that you include a typo, but you can still just drop 
-in a known SimVar value instead of a string.
+needed attributes on the subclass. But, is there any real difference in 
+terms of lines of code? Not really, but it does mean for all tasks I define
+behaviour and always that name. Which makes it a bit simplier to remember 
+when making the simulation and for when I start making code-snippets. To 
+avoid typos, I have added type hints to avoid messing up the `type` of these 
+classes, which is used to handle the routing towards the wanted helper 
+class. Likewise, now I just say a place name and the help handles the lookup 
+and creation. But, does introduce a chance that you include a typo, but you 
+can still just drop in a known SimVar value instead of a string.
 
 Another aesthetics touch I have been playing around with the actual 
 visualisation as well. Notably, I have been building a mirror of the default
 pygame interface in [`visualisation.py`](./visualisation.py). See below for
-a demonstration.
+a demonstration. Mostly focusing on showing tokens without text and adding
+a "speed up" functionality for the simulation between draw calls.
 
 ![demo of visualisation](./aesthetics-001-b.gif)
 
@@ -168,6 +169,10 @@ for t in self.events:
             timed_bindings.append((binding, time, t))
 ```
 
+## Simulation of the Scheme
+
+This section outlines the work to simulate the BPMN 2.0 models derived
+for the scheme, which had a backlog of roughly 1,000,000 cases per year.
 
 ### Pre-robodebt
 
