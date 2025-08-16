@@ -6,14 +6,14 @@ from simpn.simulator import SimProblem
 from visualisation import Visualisation
 from bpmn import BPMN
 from util import PriorityScheduler, pick_time, increment_priority
-from util import ParallelSimProblem as  SimProblem
+from util import ParallelSimProblem as SimProblem
 
 from random import uniform, choice as random_choice
 from os.path import join 
 from sys import argv
 from time import time
 
-TESTING = False
+TESTING = True
 T_DURATION = 8
 
 def work():
@@ -227,11 +227,11 @@ def work():
         print(f"simulation finished in {end:0.3f} seconds...")
 
 
-        vis = Visualisation(shop,
-                            layout_algorithm="auto",
-                            layout_file=LAYOUT_FILE,
-                            record=False)
-        vis.show()
+        # vis = Visualisation(shop,
+        #                     layout_algorithm="auto",
+        #                     layout_file=LAYOUT_FILE,
+        #                     record=False)
+        # vis.show()
 
     else:
         vis = Visualisation(shop,

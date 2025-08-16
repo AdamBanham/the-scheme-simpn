@@ -1,6 +1,7 @@
 from simpn.simulator import SimProblem, SimToken
 
 from joblib import Parallel, delayed 
+from tqdm import tqdm
 
 from random import choice as random_choice, normalvariate
 from itertools import batched, product
@@ -203,6 +204,7 @@ class ParallelSimProblem(SimProblem):
 
         # find the smallest largest enabling time for an event's
         # incoming markings
+        timings = dict()
         for ev in self.events:
             smallest = []
             skip = False
@@ -216,12 +218,15 @@ class ParallelSimProblem(SimProblem):
                     skip = True
             
             if (skip or not added):
+                timings[ev] = 0
                 continue
 
             smallest_largest = max(smallest)
+            timings[ev] = smallest_largest
 
             if (smallest_largest == 0):
                 continue
+
             
             # keep track of the smallest next possible clock
             if (smallest_largest is not None) and (min_enabling_time is None or smallest_largest < min_enabling_time):
@@ -234,7 +239,9 @@ class ParallelSimProblem(SimProblem):
         # We now also need to update the bindings, because the SimVarTime may have changed and needs to be updated.
         # TODO This is inefficient, because we are recalculating all bindings, while we only need to recalculate the ones that have SimVarTime in their inflow.
         timed_bindings = [] 
-        for t in self.events:
+        for t, earlist in timings.items():
+            if earlist > self.clock:
+                continue
             for (binding, time) in self.event_bindings(t):
                 if (time <= self.clock):
                     timed_bindings.append((binding, time, t))
@@ -263,5 +270,30 @@ class ParallelSimProblem(SimProblem):
             print(f"firing took {end:0.4f}s")
             return timed_binding
         return None
+    
+    def simulate(self, duration, reporter=None):
+        active_model = True
+        custom_bar_format = '{l_bar}{bar}| {n:.1f}/{total:.1f} [{elapsed}<{remaining}, {rate_fmt}]'
+        pbar = tqdm(
+            desc="Simulating...", 
+            total=duration,
+            bar_format=custom_bar_format
+        )
+        while self.clock <= duration and active_model:
+            last = self.clock
+            bindings = self.bindings()
+            if len(bindings) > 0:
+                timed_binding = self.binding_priority(bindings)
+                self.fire(timed_binding)
+                if reporter is not None:
+                    if type(reporter) == list:
+                        for r in reporter:
+                            r.callback(timed_binding)
+                    else:
+                        reporter.callback(timed_binding)
+            else:
+                active_model = False
+            pbar.update(self.clock - last)
+        pbar.close()
 
     

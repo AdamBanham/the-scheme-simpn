@@ -1,7 +1,7 @@
 from random import seed
 seed(42)
 
-from simpn.simulator import SimToken
+from simpn.simulator import SimToken, SimProblem
 from visualisation import Visualisation
 from bpmn import BPMN
 from util import PriorityScheduler, pick_time, increment_priority
@@ -9,10 +9,15 @@ from util import ParallelSimProblem as SimProblem
 
 from simsettings import AGENTS, BACKLOG, DURATION
 from random import uniform, choice as random_choice
+from time import time
 from os.path import join 
 from sys import argv
 
 LAYOUT_FILE = join(".", "tut-bpmn-01.layout")
+
+TESTING = True
+T_DURATION = DURATION / 4
+RECORD = False
 
 shop = SimProblem(
     binding_priority=PriorityScheduler("Intervention Loaded")
@@ -181,10 +186,25 @@ class IssueNotice(BPMN):
         c = increment_priority(c)
         return [SimToken((c, r), delay=pick_time(1))]
 
-vis = Visualisation(shop,
-                    layout_algorithm="auto",
-                    layout_file=LAYOUT_FILE,
-                    record=False)
-vis.set_speed(20)
-vis.show()
-vis.save_layout(LAYOUT_FILE)
+if TESTING:
+    start = time()
+    shop.simulate(T_DURATION)
+    end = time() - start 
+    print(f"simulation took {end:.3f} seconds...")
+
+    vis = Visualisation(shop,
+                        layout_algorithm="auto",
+                        layout_file=LAYOUT_FILE,
+                        record=True)
+    vis.set_speed(200)
+    vis.show()
+    vis.save_layout(LAYOUT_FILE)
+
+else:
+    vis = Visualisation(shop,
+                        layout_algorithm="auto",
+                        layout_file=LAYOUT_FILE,
+                        record=RECORD)
+    vis.set_speed(200)
+    vis.show()
+    vis.save_layout(LAYOUT_FILE)

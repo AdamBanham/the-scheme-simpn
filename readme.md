@@ -173,7 +173,7 @@ for t in self.events:
 ```
 Turns out that a sorted collection from `sortedcollections`
 is being used at the lower SimVar level. This means that we can always
-quickly grab the value, making the first loop somewhat wasteful. 
+quickly grab the smallest/largest time related to tokens. 
 So, I ended up writing the following to replace the first loop:
 ```python
 min_enabling_time = None
@@ -217,6 +217,44 @@ util.ParallelSimProblem:- `43.1+42.7+45.9+44.5+45.2 = 221.4` or `44.28` on avg
 Speed up:- `84.48/44.28 = 1.91`. Nice close to the 2.0 to be expected from 
 dropping the major iteration of `event_bindings`.
 
+Let's check the flame graph after the changes to see what has changed in 
+terms of runtime spent by the simulation.
+
+first phase:
+![flamegraph after loop removal](./tut-bpmn-01-2-prof.svg)
+second phase:
+![flamegraph after loop removal](./tut-bpmn-02-2-prof.svg)
+
+The last thing to check is if we reduce the number of calls to 
+`event_bindings` as both flame graphs note that this function makes up
+most of the runtime. Which seems possible now by simply not calling it 
+on events that do not have a chance to produce bindings with an 
+enabling time less than the adjusted clock.
+
+Rerunning times and the new speed up is:
+
+util.ParallelSimProblem:- `0.4+0.4+0.4+0.4+0.4 = 2` or `0.4` on avg.
+
+Speed up:- `84.48/0.4= 211.2`.
+
+The second phase mostly generates tokens that are delayed for up to 
+two weeks at the start, so there is not a lot of "work" for the sim.
+So a speed of `211.2` is not a great representation of the improvements.
+Instead let's compare with the first phase from now on.
+
+simpn.simulator.SimProblem:- `91.6+89.4+90.5+90.2+89.4 = 451.1` or `90.22` on avg.
+
+util.ParallelSimProblem:- `2.6+2.4+2.4+2.4+2.3 = 12.1` or `2.42` on avg
+
+Speed up:- `90.22/2.42 = 37.28`. Still a pretty crazy speed up from being
+far more aggressive with the pruning of bindings. Let's also recompute the
+flamegraph as well.
+
+![flamegraph of big speed up](./tut-bpmn-01-3-prof.svg)
+
+`bindings` is now no longer consuming all the runtime of the simulation,
+so a good sign and maybe I could consider other parts of the workflow. But,
+realistically, I think it would only introduce unwanted complexity.
 
 ## Simulation of the Scheme
 
