@@ -10,8 +10,8 @@ simulating a process modelled in BPMN.
     - oci 
 - Work out a way to make the resulting simulation data presentable via 
   a web interface 
-- Work out a way to give power to visitor to change the process and see
-  how there changes affected the performance of the process
+- Work out a way to give power to a visitor to change the process and see
+  how these changes affected the performance of the process
 
 ## Progress 
 
