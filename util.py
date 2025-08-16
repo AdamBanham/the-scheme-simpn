@@ -2,10 +2,24 @@ from simpn.simulator import SimProblem, SimToken
 
 from joblib import Parallel, delayed 
 
-from random import choice as random_choice
+from random import choice as random_choice, normalvariate
 from itertools import batched, product
 from time import time as now
 from copy import deepcopy
+
+def pick_time(normally, dev=None) -> float:
+    """
+    Returns a a non-neg normally distribution sample from a 
+    distribution with a mean of `normally` with a deviation 
+    of `dev`. `dev` defaults to 1/4 of `normally` if not given.
+    Minimum return value is 1/8 of the normally time.
+    """
+    if dev is None:
+        dev = max(0.25, normally * 0.25)
+    return max(
+        (normally * (1/8.0)),
+        normalvariate(normally, dev)
+    )
 
 class PriorityScheduler:
     

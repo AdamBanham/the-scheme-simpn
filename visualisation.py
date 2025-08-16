@@ -110,6 +110,133 @@ class CustomPlaceViz(PlaceViz):
         screen.blit(label, (text_x_pos, text_y_pos))      
         if (last_time != None): 
             self._last_time = last_time 
+
+class CustomEdge(Edge):
+    """
+    Thin wrapper to handle resouce-pool edges.
+    """
+
+    def draw(self, screen):
+        start_node_xy = self.get_start_node().get_pos()
+        start_node_width, start_node_height = self.get_start_node()._width, self.get_start_node()._height
+        end_node_xy = self.get_end_node().get_pos()
+        end_node_width, end_node_height = self.get_end_node()._width, self.get_end_node()._height
+        if start_node_xy[1] - start_node_height/2 > end_node_xy[1] + end_node_height/2:
+            self.set_start_hook(Hook.TOP)
+        elif start_node_xy[1] + start_node_height/2 < end_node_xy[1] - end_node_height/2:
+            self.set_start_hook(Hook.BOTTOM)
+        elif start_node_xy[0] - start_node_width/2 > end_node_xy[0] + end_node_width/2:
+            self.set_start_hook(Hook.LEFT)
+        else:
+            self.set_start_hook(Hook.RIGHT)
+        if end_node_xy[1] - end_node_height/2 > start_node_xy[1] + start_node_height/2:
+            self.set_end_hook(Hook.TOP)
+        elif end_node_xy[1] + end_node_height/2 < start_node_xy[1] - start_node_height/2:
+            self.set_end_hook(Hook.BOTTOM)
+        elif end_node_xy[0] - end_node_width/2 > start_node_xy[0] + start_node_width/2:
+            self.set_end_hook(Hook.LEFT)
+        else:
+            self.set_end_hook(Hook.RIGHT)
+        start = pygame.Vector2(self._start[0].hook(self._start[1]))
+        end = pygame.Vector2(self._end[0].hook(self._end[1]))
+        arrow = start - end
+        angle = arrow.angle_to(pygame.Vector2(0, -1))
+        body_length = arrow.length() - ARROW_HEIGHT
+
+        connected_to_res_pool = False
+        start_model_node = self.get_start_node()._model_node
+        end_model_node = self.get_end_node()._model_node 
+        if hasattr(start_model_node, '_resource_pool'):
+            connected_to_res_pool = start_model_node._resource_pool
+        if hasattr(end_model_node, '_resource_pool'):
+            return
+
+
+        # if the end node does not want to show arrowheads, we simply draw a line from start to end
+        if not self.get_end_node()._show_arrowheads:
+            pygame.draw.line(screen, TUE_BLUE, start, end, int(LINE_WIDTH*1.5))
+            return
+        
+        if connected_to_res_pool:
+            # Draw dashed red line with opacity 0.33, always visible
+            dash_length = 10
+            gap_length = 24
+            line_width = int(LINE_WIDTH * 1.5)
+            direction = end - start
+            length = direction.length()
+            if length == 0:
+                return
+            direction = direction.normalize()
+            color = TUE_RED
+            alpha = int(255 * 0.33)
+            num_dashes = int(length // (dash_length + gap_length))
+            # Find bounding box for all dashes
+            all_points = []
+            for i in range(num_dashes + 1):
+                seg_start = start + direction * (i * (dash_length + gap_length))
+                seg_end = seg_start + direction * dash_length
+                if (seg_end - start).length() > length:
+                    seg_end = end
+                dash_len = (seg_end - seg_start).length()
+                if dash_len == 0:
+                    continue
+                all_points.extend([seg_start, seg_end])
+            if not all_points:
+                return
+            min_x = min(p.x for p in all_points)
+            min_y = min(p.y for p in all_points)
+            max_x = max(p.x for p in all_points)
+            max_y = max(p.y for p in all_points)
+            surf_w = int(abs(max_x - min_x)) + line_width
+            surf_h = int(abs(max_y - min_y)) + line_width
+            temp_surface = pygame.Surface((surf_w, surf_h), pygame.SRCALPHA)
+            # Draw all dashes on one surface
+            for i in range(num_dashes + 1):
+                seg_start = start + direction * (i * (dash_length + gap_length))
+                seg_end = seg_start + direction * dash_length
+                if (seg_end - start).length() > length:
+                    seg_end = end
+                dash_len = (seg_end - seg_start).length()
+                if dash_len == 0:
+                    continue
+                start_pos = (seg_start.x - min_x, seg_start.y - min_y)
+                end_pos = (seg_end.x - min_x, seg_end.y - min_y)
+                pygame.draw.line(temp_surface, (*color, alpha), start_pos, end_pos, line_width)
+            screen.blit(temp_surface, (min_x, min_y))
+            return
+
+        # Create the triangle head around the origin
+        head_verts = [
+            pygame.Vector2(0, ARROW_HEIGHT / 2),  # Center
+            pygame.Vector2(ARROW_WIDTH / 2, -ARROW_HEIGHT / 2),  # Bottomright
+            pygame.Vector2(-ARROW_WIDTH / 2, -ARROW_HEIGHT / 2),  # Bottomleft
+        ]
+        # Rotate and translate the head into place
+        translation = pygame.Vector2(0, arrow.length() - (ARROW_HEIGHT / 2)).rotate(-angle)
+        for i in range(len(head_verts)):
+            head_verts[i].rotate_ip(-angle)
+            head_verts[i] += translation
+            head_verts[i] += start
+
+        pygame.draw.polygon(screen, TUE_BLUE, head_verts)
+
+        # Stop weird shapes when the arrow is shorter than arrow head
+        if arrow.length() >= ARROW_HEIGHT:
+            # Calculate the body rect, rotate and translate into place
+            body_verts = [
+                pygame.Vector2(-LINE_WIDTH / 2, body_length / 2),  # Topleft
+                pygame.Vector2(LINE_WIDTH / 2, body_length / 2),  # Topright
+                pygame.Vector2(LINE_WIDTH / 2, -body_length / 2),  # Bottomright
+                pygame.Vector2(-LINE_WIDTH / 2, -body_length / 2),  # Bottomleft
+            ]
+            translation = pygame.Vector2(0, body_length / 2).rotate(-angle)
+            for i in range(len(body_verts)):
+                body_verts[i].rotate_ip(-angle)
+                body_verts[i] += translation
+                body_verts[i] += start
+
+            pygame.draw.polygon(screen, TUE_BLUE, body_verts)
+
     
 
 class Visualisation:
@@ -204,7 +331,7 @@ class Visualisation:
                         node_id = element_to_prototype[node_id]
                     if node_id in self._nodes:
                         other_viznode = self._nodes[node_id]
-                        self._edges.append(Edge(start=(other_viznode, Hook.RIGHT), end=(viznode, Hook.LEFT)))
+                        self._edges.append(CustomEdge(start=(other_viznode, Hook.RIGHT), end=(viznode, Hook.LEFT)))
             for outgoing in to_nodes:
                 if outgoing.visualize_edges:
                     node_id = outgoing.get_id()
@@ -214,7 +341,7 @@ class Visualisation:
                         node_id = element_to_prototype[node_id]
                     if node_id in self._nodes:
                         other_viznode = self._nodes[node_id]
-                        self._edges.append(Edge(start=(viznode, Hook.RIGHT), end=(other_viznode, Hook.LEFT)))
+                        self._edges.append(CustomEdge(start=(viznode, Hook.RIGHT), end=(other_viznode, Hook.LEFT)))
         layout_loaded = False
         if layout_file is not None:
             try:

@@ -1,9 +1,11 @@
+from simpn.simulator import SimVar,SimProblem,SimToken
 from simpn.prototypes import BPMNTask
 import visualisation as vis
 import pygame
 import math
 
 from abc import abstractmethod
+from typing import Literal, List, Union
 
 class CustomBPMNTask(BPMNTask):
     """
@@ -90,6 +92,31 @@ class HelperBPMNTask(CustomBPMNTask):
     outgoing = None
     name = None
 
+    @staticmethod
+    def __create__(cls, **kwargs):
+        model = getattr(cls, 'model', None)
+        incoming = getattr(cls, 'incoming', None)
+        outgoing = getattr(cls, 'outgoing', None)
+        name = getattr(cls, 'name', None)
+        if model is None or incoming is None or outgoing is None or name is None:
+            # Don't register the abstract base class
+            if cls.__name__ == 'HelperBPMNTask':
+                return
+            raise ValueError("You must define static class variables: model, incoming, outgoing, and name in your HelperBPMNTask subclass.")
+        # Fetch static/class methods
+        behaviour = getattr(cls, 'behaviour', None)
+        if behaviour is None or not callable(behaviour):
+            raise NotImplementedError("You must implement a static/class method 'behaviour(*args)' in your HelperBPMNTask subclass.")
+        guard = getattr(cls, 'guard', None)
+        outgoing_behaviour = getattr(cls, 'outgoing_behaviour', None)
+        # If not implemented, set to None
+        if guard is not None and not callable(guard):
+            guard = None
+        if outgoing_behaviour is not None and not callable(outgoing_behaviour):
+            outgoing_behaviour = None
+        # Register the task with the model by instantiating the subclass
+        HelperBPMNTask(model, incoming, outgoing, name, behaviour, guard=guard, outgoing_behavior=outgoing_behaviour)
+
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         # Fetch static/class variables
@@ -135,8 +162,23 @@ class HelperBPMNStart(BPMNStartEvent):
     model = None
     outgoing = None
     name = None
+
+    @staticmethod
+    def __create__(cls, **kwargs):
+        model = getattr(cls, 'model', None)
+        outgoing = getattr(cls, 'outgoing', None)
+        name = getattr(cls, 'name', None)
+        if model is None or outgoing is None or name is None:
+            if cls.__name__ == 'HelperBPMNStart':
+                return
+            raise ValueError("You must define static class variables: model, outgoing, and name in your HelperBPMNStart subclass.")
+        interarrival_time = getattr(cls, 'interarrival_time', None)
+        if interarrival_time is None or not callable(interarrival_time):
+            raise NotImplementedError("You must implement a static/class method 'interarrival_time()' in your HelperBPMNStart subclass.")
+        # Register the start event with the model by instantiating BPMNStartEvent
+        HelperBPMNStart(model, [], outgoing, name, interarrival_time)
+
     def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
         model = getattr(cls, 'model', None)
         outgoing = getattr(cls, 'outgoing', None)
         name = getattr(cls, 'name', None)
@@ -170,6 +212,19 @@ class HelperBPMNEnd(BPMNEndEvent):
     model = None
     incoming = None
     name = None
+
+    @staticmethod
+    def __create__(cls, **kwargs):
+        model = getattr(cls, 'model', None)
+        incoming = getattr(cls, 'incoming', None)
+        name = getattr(cls, 'name', None)
+        if model is None or incoming is None or name is None:
+            if cls.__name__ == 'HelperBPMNEnd':
+                return
+            raise ValueError("You must define static class variables: model, outgoing, and name in your HelperBPMNStart subclass.")
+        # Register the start event with the model by instantiating BPMNStartEvent
+        HelperBPMNEnd(model, incoming, [], name)
+
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         model = getattr(cls, 'model', None)
@@ -278,6 +333,23 @@ class HelperBPMNIntermediateEvent(BPMNIntermediateEvent):
     outgoing = None
     name = None
 
+    @staticmethod
+    def __create__(cls, **kwargs):
+        model = getattr(cls, 'model', None)
+        incoming = getattr(cls, 'incoming', None)
+        outgoing = getattr(cls, 'outgoing', None)
+        name = getattr(cls, 'name', None)
+        if model is None or incoming is None or outgoing is None or name is None:
+            if cls.__name__ == 'HelperBPMNIntermediateEvent':
+                return
+            raise ValueError("You must define static class variables: model, incoming, outgoing, and name in your HelperBPMNIntermediateEvent subclass.")
+        behaviour = getattr(cls, 'behaviour', None)
+        if behaviour is None or not callable(behaviour):
+            raise NotImplementedError("You must implement a static/class method 'behaviour(*args)' in your HelperBPMNIntermediateEvent subclass.")
+        # Register the intermediate event with the model by instantiating BPMNIntermediateEvent
+        HelperBPMNIntermediateEvent(model, incoming, outgoing, name, behaviour)
+
+
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         model = getattr(cls, 'model', None)
@@ -365,6 +437,23 @@ class HelperBPMNExclusiveSplit(BPMNExclusiveSplitGateway):
     outgoing = None
     name = None
 
+    @staticmethod
+    def __create__(cls, **kwargs):
+        # Import here to avoid circular imports
+        if not all(hasattr(cls, attr) for attr in ("model", "incoming", "outgoing", "name")):
+            raise AttributeError("HelperBPMNExclusiveSplitGateway subclasses must define model, incoming, outgoing, and name class variables.")
+        if not hasattr(cls, "choice"):
+            raise AttributeError("HelperBPMNExclusiveSplitGateway subclasses must define a 'choice' method.")
+        # Register the gateway automatically
+        HelperBPMNExclusiveSplit(
+            cls.model,
+            cls.incoming,
+            cls.outgoing,
+            cls.name,
+            cls.choice,
+            **kwargs
+        )
+
     def __init_subclass__(cls):
         # Import here to avoid circular imports
         if not all(hasattr(cls, attr) for attr in ("model", "incoming", "outgoing", "name")):
@@ -396,6 +485,18 @@ class HelperBPMNExclusiveJoin(BPMNExclusiveJoinGateway):
     outgoing = None
     name = None
 
+    @staticmethod
+    def __create__(cls, **kwargs):
+        if not all(hasattr(cls, attr) for attr in ("model", "incoming", "outgoing", "name")):
+            raise AttributeError("HelperBPMNExclusiveSplitGateway subclasses must define model, incoming, outgoing, and name class variables.")
+        # Register the gateway automatically
+        HelperBPMNExclusiveJoin(
+            cls.model,
+            cls.incoming,
+            cls.outgoing,
+            cls.name
+        )
+
     def __init_subclass__(cls):
         if not all(hasattr(cls, attr) for attr in ("model", "incoming", "outgoing", "name")):
             raise AttributeError("HelperBPMNExclusiveSplitGateway subclasses must define model, incoming, outgoing, and name class variables.")
@@ -406,3 +507,105 @@ class HelperBPMNExclusiveJoin(BPMNExclusiveJoinGateway):
             cls.outgoing,
             cls.name
         )
+
+class HelperResourcePool:
+    """
+    A helper subclass instance to make a resource pool
+    within the simulation problem.
+
+    Basically, adds a SimVar place with an `amount` of
+    tokens for use. But, uses a thin wrapper around SimVar
+    for visualiusation of the place and edges.
+    """
+    name:str=None 
+    model:SimProblem=None 
+    amount:int=None
+
+    def __create__(cls, **kwargs):
+        if any(hasattr(cls, attr) and getattr(cls, attr) is None for attr in ["name","model","amount"]):
+            raise ValueError('Missing values for the following key attributes: ["name","model","amount"]')
+        place = cls.model.add_place(cls.name)
+        for i in range(cls.amount):
+            place.put(f"{cls.name}-{i+1}") 
+        place._resource_pool = True
+
+    def __init_subclass__(cls, **kwargs):
+        if all(hasattr(cls, name) and getattr(cls, name) is not None for name in ["name","model","amount"]):
+            raise ValueError('Missing values for the following key attributes: ["name","model","amount"]')
+        place = cls.model.add_place(cls.name)
+        for i in range(cls.amount):
+            place.put(f"{cls.name}-{i+1}")
+        place._resource_pool = True
+
+
+TYPES = {
+    "start" : HelperBPMNStart.__create__,
+    "end" : HelperBPMNEnd.__create__,
+    "task" : HelperBPMNTask.__create__,
+    "gat-ex-split" : HelperBPMNExclusiveSplit.__create__,
+    "gat-ex-join" : HelperBPMNExclusiveJoin.__create__,
+    "event" : HelperBPMNIntermediateEvent.__create__,
+    "resource-pool" : HelperResourcePool.__create__
+}
+TYPE_NAMES = Literal["start", "end", "task", "gat-ex-split",
+                     "gat-ex-join", "event", "resource-pool"]
+
+class BPMN:
+    """
+    A synatical sugar wrapper class to handle making a specific bpmn helper.
+    \n
+    Requires:\n
+    `type`-str:- what helper class should be made\n
+    \n
+    Helper Specific Variables:\n
+    `model`-SimProblem:- needed by all helpers, what problem does this construct belong to.\n
+    `name`-str:- needed by all helpers, identify for the construct.\n
+    \n
+    Helper Specific Funcitons:\n
+
+    \n
+    """
+    type:TYPE_NAMES=None 
+    model:SimProblem=None
+    name:str=None
+    incoming:List[Union[str,SimVar]]=None
+    outgoing:List[Union[str,SimVar]]=None
+    guard=None 
+
+    def __init_subclass__(cls, **kwargs):
+        if not all(hasattr(cls, attr) and getattr(cls, attr) is not None for attr in ("type", "model", "name")):
+            raise ValueError("Missing required attributes for BPMN construct : ['model', 'name', 'type']")
+        # handle outgoing strings
+        if hasattr(cls, 'outgoing') and cls.outgoing != None:
+            for i,val in enumerate(cls.outgoing):
+                if isinstance(val, str):
+                    if val in cls.model.id2node.keys():
+                        cls.outgoing[i] = cls.model.id2node[val]
+                    else:
+                        cls.outgoing[i] = cls.model.add_var(val)
+        # handle incoming strings
+        if hasattr(cls, 'incoming') and cls.incoming != None:
+            for i,val in enumerate(cls.incoming):
+                if isinstance(val, str):
+                    if val in cls.model.id2node.keys():
+                        cls.incoming[i] = cls.model.id2node[val]
+                    else:
+                        cls.incoming[i] = cls.model.add_var(val)
+        tasker = TYPES[cls.type]
+        tasker(cls)
+
+    # @staticmethod
+    # def behaviour(*args) -> List[SimToken]:
+    #     pass
+
+    # @staticmethod
+    # def choice(*args) -> List[Union[None, SimToken]]:
+    #     pass 
+    
+    # @staticmethod
+    # def guard(*args):
+    #     pass
+
+    # @staticmethod
+    # def interarrival_time():
+    #     pass
