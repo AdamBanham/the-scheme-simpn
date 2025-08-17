@@ -70,7 +70,7 @@ class DebtXorSplit(BPMN):
     model=problem
     name="Did entitlement result in a debt?"
     incoming=["calculated entitlement"]
-    outgoing=["resulted in debt", "no debt"]
+    outgoing=["resulted in debt", "no debt raised"]
 
     def choice(c):
         c = increment_priority(c)
@@ -144,8 +144,8 @@ class DebtRaisedEnd(BPMN):
 class NoDebtEndEvent(BPMN):
     type="end"
     model=problem
-    name="Debt unfound"
-    incoming=["no debt"]
+    name="No Debt"
+    incoming=["no debt raised"]
 
 if exists(LAYOUT_FILE):
     vis = Visualisation(
@@ -156,6 +156,6 @@ else:
     vis = Visualisation(
         problem, record=RECORD
     )
-vis.set_speed(200)
+vis.set_speed(2000)
 vis.show()
 vis.save_layout(LAYOUT_FILE)

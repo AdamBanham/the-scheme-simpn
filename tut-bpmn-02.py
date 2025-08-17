@@ -14,6 +14,7 @@ from sys import argv
 from time import time
 
 TESTING = False
+RECORD = False
 T_DURATION = 8
 
 def work():
@@ -238,7 +239,7 @@ def work():
         vis = Visualisation(shop,
                             layout_algorithm="auto",
                             layout_file=LAYOUT_FILE,
-                            record=False)
+                            record=RECORD)
         vis.set_speed(2000)
         vis.show()
         vis.save_layout(LAYOUT_FILE)

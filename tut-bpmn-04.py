@@ -207,6 +207,6 @@ else:
     vis = Visualisation(
         problem, record=RECORD
     )
-vis.set_speed(200)
+vis.set_speed(2000)
 vis.show()
 vis.save_layout(LAYOUT_FILE)
