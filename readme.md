@@ -256,6 +256,55 @@ flamegraph as well.
 so a good sign and maybe I could consider other parts of the workflow. But,
 realistically, I think it would only introduce unwanted complexity.
 
+I attempted to simulate one quarter of the 1,000,000 cases overnight, where
+the simulation completed  489.0/567.5 [10:44:43<8:26:20, 386.81s/it] over
+roughly 11 hours. Perphas a way to improve performanc lies in the way, I am
+handling the interarrival rate for the simulations. If were to batch the 
+arrival of new cases, the number of calls to bindings would likely be reduced
+as well.
+
+Batching the start event will make the start of the simulation faster, but
+the runtime benefits will plateu as the tokens lay waiting for the limited
+resources to be fired. 
+
+util.ParallelSimProblem:- `1.7+1.7+1.8+1.7+1.8 = 8.7` or `1.74` on avg
+
+Speed up:- `90.22/1.74 = 51.85`. A good boost to the initial setup. I will
+revisit speed between this apporach and the last once a 1/4 of the duration 
+has been completed.
+
+#### Test run with batching
+
+So the results from running the simulation for a duration of 567.5, without
+batching are as follows:
+```
+Simulating...: 100%|██████▉| 567.4/567.5 [15:49:19<00:13, 214.14s/it]
+simulation took 56959.278 seconds...
+```
+Final State:
+![final state of the simulation](./tut-bpmn-01-test-run-567.5.png)
+
+The results from running the simulation for a duration of 567.5, with 
+batching are as follows:
+```
+
+```
+Final State:
+![final state of the simulation with batching]()
+
+
+#### Checking on response times 
+
+Some general observations of response times from the internal steps of the 
+`SimProblem` to make a step happen.
+
+![sim-1](./sim-01-timing.png)
+![sim-1](./sim-02-timing.png)
+![sim-1](./sim-03-timing.png)
+![sim-1](./sim-04-timing.png)
+![sim-1](./sim-05-timing.png)
+
+
 ## Simulation of the Scheme
 
 This section outlines the work to simulate the BPMN 2.0 models derived

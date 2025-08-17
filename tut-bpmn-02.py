@@ -13,7 +13,7 @@ from os.path import join
 from sys import argv
 from time import time
 
-TESTING = True
+TESTING = False
 T_DURATION = 8
 
 def work():
@@ -24,7 +24,7 @@ def work():
         binding_priority=PriorityScheduler("Notice Issued")
     )
 
-    from simsettings import DURATION, BACKLOG, AGENTS
+    from simsettings import DURATION, BACKLOG, AGENTS, BATCHED, RATE
 
     if (len(argv) < 2):
         print("missing argument for number of agents, using default of 25.")
@@ -59,10 +59,11 @@ def work():
         type="start"
         model = shop
         outgoing = [c1]
+        amount = BATCHED
         name = "Notice Issued"
 
         def interarrival_time():
-            return DURATION / BACKLOG
+            return RATE
         
     class RecipientResponse1(BPMN):
         type="gat-ex-split"
@@ -238,7 +239,7 @@ def work():
                             layout_algorithm="auto",
                             layout_file=LAYOUT_FILE,
                             record=False)
-        vis.set_speed(20)
+        vis.set_speed(2000)
         vis.show()
         vis.save_layout(LAYOUT_FILE)
 

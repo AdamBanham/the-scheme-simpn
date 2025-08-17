@@ -1,7 +1,7 @@
 from random import seed
 seed(42)
 
-from simsettings import BACKLOG, DURATION, AGENTS
+from simsettings import BACKLOG, DURATION, AGENTS, BATCHED, RATE
 
 from simpn.simulator import SimToken, SimProblem
 from visualisation import Visualisation
@@ -37,10 +37,11 @@ class PhaseStart(BPMN):
     type="start"
     name=START_NAME
     model=problem
+    amount=BATCHED
     outgoing=["phase started"]
 
     def interarrival_time():
-        return DURATION / BACKLOG
+        return RATE
     
 class ConfirmRecipient(BPMN):
     model=problem
@@ -245,6 +246,6 @@ else:
     vis = Visualisation(
         problem, record=RECORD
     )
-vis.set_speed(20)
+vis.set_speed(2000)
 vis.show()
 vis.save_layout(LAYOUT_FILE)

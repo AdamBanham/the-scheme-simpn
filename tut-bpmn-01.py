@@ -7,7 +7,7 @@ from bpmn import BPMN
 from util import PriorityScheduler, pick_time, increment_priority
 from util import ParallelSimProblem as SimProblem
 
-from simsettings import AGENTS, BACKLOG, DURATION
+from simsettings import AGENTS, BACKLOG, DURATION, BATCHED, RATE
 from random import uniform, choice as random_choice
 from time import time
 from os.path import join 
@@ -15,7 +15,7 @@ from sys import argv
 
 LAYOUT_FILE = join(".", "tut-bpmn-01.layout")
 
-TESTING = True
+TESTING = False
 T_DURATION = DURATION / 4
 RECORD = False
 
@@ -52,10 +52,11 @@ class InterventionLoaded(BPMN):
     type="start"
     model = shop
     outgoing = [c1]
+    amount = BATCHED
     name = "Intervention Loaded"
 
     def interarrival_time():
-        return DURATION / BACKLOG
+        return RATE
     
 class GoodEnding(BPMN):
     type="end"
@@ -205,6 +206,6 @@ else:
                         layout_algorithm="auto",
                         layout_file=LAYOUT_FILE,
                         record=RECORD)
-    vis.set_speed(200)
+    vis.set_speed(2000)
     vis.show()
     vis.save_layout(LAYOUT_FILE)

@@ -6,7 +6,7 @@ from visualisation import Visualisation
 from util import PriorityScheduler, pick_time
 from util import ParallelSimProblem as SimProblem
 from util import increment_priority
-from simsettings import AGENTS, DURATION, BACKLOG
+from simsettings import AGENTS, DURATION, BACKLOG, BATCHED, RATE
 from bpmn import BPMN
 
 from os.path import join, exists
@@ -36,10 +36,11 @@ class PhaseStart(BPMN):
     type="start"
     name=START_NAME
     model=problem
+    amount=BATCHED
     outgoing=["information required"]
 
     def interarrival_time():
-        return DURATION / BACKLOG
+        return RATE
     
 class GenerateEmployerTask(BPMN):
     type="task"
@@ -206,6 +207,6 @@ else:
     vis = Visualisation(
         problem, record=RECORD
     )
-vis.set_speed(20)
+vis.set_speed(200)
 vis.show()
 vis.save_layout(LAYOUT_FILE)

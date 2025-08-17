@@ -8,13 +8,13 @@ from util import ParallelSimProblem as SimProblem
 from util import increment_priority
 from bpmn import BPMN
 
-from simsettings import AGENTS, DURATION, BACKLOG
+from simsettings import AGENTS, DURATION, BACKLOG, BATCHED, RATE
 from os.path import join, exists
 from random import uniform
 from sys import argv
 
 LAYOUT_FILE = join(".","tut-bpmn-05.layout")
-RECORD = True
+RECORD = False
 START_NAME = "entitlement-assessment"
 
 
@@ -37,10 +37,11 @@ class PhaseStart(BPMN):
     type="start"
     name=START_NAME
     model=problem
+    amount=BATCHED
     outgoing=["assessment started"]
 
     def interarrival_time():
-        return DURATION / BACKLOG
+        return RATE
 
 class UpdateRecordTask(BPMN):
     type="task"
@@ -155,6 +156,6 @@ else:
     vis = Visualisation(
         problem, record=RECORD
     )
-vis.set_speed(20)
+vis.set_speed(200)
 vis.show()
 vis.save_layout(LAYOUT_FILE)

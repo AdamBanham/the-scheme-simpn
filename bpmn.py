@@ -1,5 +1,6 @@
 from simpn.simulator import SimVar,SimProblem,SimToken
 from simpn.prototypes import BPMNTask
+import inspect
 import visualisation as vis
 import pygame
 import math
@@ -150,9 +151,9 @@ class HelperBPMNTask(CustomBPMNTask):
 
 
 # Helper class for BPMNStartEvent
-from simpn.prototypes import BPMNStartEvent
+from simpn.prototypes import BPMNStartEvent, Prototype
 
-class HelperBPMNStart(BPMNStartEvent):
+class HelperBPMNStart(Prototype):
     """
     Helper class for BPMNStartEvent to allow easy subclassing and automatic registration with the model.
     Subclass this and implement the interarrival_time as a static/class method (no self argument).
@@ -162,12 +163,89 @@ class HelperBPMNStart(BPMNStartEvent):
     model = None
     outgoing = None
     name = None
+    amount = None
+
+    def __init__(self, 
+                 model:SimProblem, 
+                 incoming, 
+                 outgoing, 
+                 name, 
+                 interarrival_time, 
+                 behavior=None,
+                 amount=1
+                 ):
+        super().__init__(model, incoming, outgoing, name)
+        self.amount = amount
+
+        if len(incoming) != 0:
+            raise TypeError("Start event " + name + ": cannot have any incoming.")
+        if len(outgoing) != 1:
+            raise TypeError("Start event " + name + ": must have exactly one outgoing.")
+        if not callable(interarrival_time) and not type(interarrival_time) is int and not type(interarrival_time) is float:
+            raise TypeError("Start event " + name + ": must either have a value or a function as interarrival_time.")
+        interarrival_time_f = interarrival_time
+        if type(interarrival_time) is int or type(interarrival_time) is float:
+            interarrival_time_f = lambda: interarrival_time
+
+        invar_name = name + "_timer"
+        invar = model.add_var(invar_name)
+        self.add_var(invar)
+        if behavior is None:
+            gen = lambda tok: self.generate(tok, interarrival_time_f)
+            result = model.add_event(
+                [invar], 
+                [invar] + [outgoing[0]] * amount, 
+                gen,
+                name=name + "<start_event>")
+            self.add_event(result)
+        else:
+            if not callable(behavior):
+                raise TypeError("Start event " + name + ": the behavior must be a function. (Maybe you made it a function call, exclude the brackets.)")
+            if len(inspect.signature(behavior).parameters) != 0:
+                raise TypeError("Start event " + name + ": the behavior function must not have many parameters.")
+            result = model.add_event(
+                [invar], 
+                [invar] +  [outgoing[0]] * amount, 
+                gen, 
+                name=name + "<start_event>"
+            )
+            self.add_event(result)
+        invar.put(name + "0")
+
+        model.add_prototype(self)
+
+    def generate(self, a, delay) -> List:
+        """
+        Can I make it so that we have multiple outputs?
+        """
+        if self.amount is not None and isinstance(self.amount, int):
+            ret = []
+            start_id = int(a[len(self.name):])
+            ret.append(
+                SimToken(
+                    f"{self.name}-{start_id+self.amount+1}", 
+                    delay=delay()
+                )
+            )
+            for tok in range(self.amount):
+                ret.append(
+                    SimToken((f"{self.name}-{start_id+tok}",))
+                )
+            return ret
+        else:
+            return [
+                SimToken(self.name + str(int(a[len(self.name):]) + 1), 
+                        delay=delay()
+                ),
+                SimToken((a,))
+            ]
 
     @staticmethod
     def __create__(cls, **kwargs):
         model = getattr(cls, 'model', None)
         outgoing = getattr(cls, 'outgoing', None)
         name = getattr(cls, 'name', None)
+        amount = getattr(cls, 'amount', 1)
         if model is None or outgoing is None or name is None:
             if cls.__name__ == 'HelperBPMNStart':
                 return
@@ -176,12 +254,13 @@ class HelperBPMNStart(BPMNStartEvent):
         if interarrival_time is None or not callable(interarrival_time):
             raise NotImplementedError("You must implement a static/class method 'interarrival_time()' in your HelperBPMNStart subclass.")
         # Register the start event with the model by instantiating BPMNStartEvent
-        HelperBPMNStart(model, [], outgoing, name, interarrival_time)
+        HelperBPMNStart(model, [], outgoing, name, interarrival_time, amount=amount)
 
     def __init_subclass__(cls, **kwargs):
         model = getattr(cls, 'model', None)
         outgoing = getattr(cls, 'outgoing', None)
         name = getattr(cls, 'name', None)
+        amount = getattr(cls, 'amount', 1)
         if model is None or outgoing is None or name is None:
             if cls.__name__ == 'HelperBPMNStart':
                 return
@@ -190,12 +269,15 @@ class HelperBPMNStart(BPMNStartEvent):
         if interarrival_time is None or not callable(interarrival_time):
             raise NotImplementedError("You must implement a static/class method 'interarrival_time()' in your HelperBPMNStart subclass.")
         # Register the start event with the model by instantiating BPMNStartEvent
-        cls(model, [], outgoing, name, interarrival_time)
+        cls(model, [], outgoing, name, interarrival_time, amount=amount)
 
     @staticmethod
     @abstractmethod
     def interarrival_time():
         pass
+
+    def get_visualisation(self):
+        return BPMNStartEvent.BPMNStartEventViz(self)
 
 from simpn.prototypes import BPMNEndEvent
 
