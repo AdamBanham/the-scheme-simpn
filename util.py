@@ -227,9 +227,10 @@ class ParallelSimProblem(SimProblem):
             if (smallest_largest == 0):
                 continue
 
-            
             # keep track of the smallest next possible clock
-            if (smallest_largest is not None) and (min_enabling_time is None or smallest_largest < min_enabling_time):
+            if (smallest_largest is not None) \
+                and (min_enabling_time is None \
+                     or smallest_largest < min_enabling_time):
                 min_enabling_time = smallest_largest 
 
         # timed bindings are only enabled if they have time <= clock

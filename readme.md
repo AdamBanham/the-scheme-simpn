@@ -304,10 +304,9 @@ Final State:
 The results from running the simulation for a duration of 567.5, with 
 batching are as follows:
 ```
-
+Simulating...: 100%|████████| 567.5/567.5 [16:45:29<-1:59:58, 106.30s/it]
+simulation took 60329.116 seconds..
 ```
-Final State:
-![final state of the simulation with batching]()
 
 
 #### Checking on response times 
