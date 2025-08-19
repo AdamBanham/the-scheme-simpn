@@ -49,7 +49,7 @@ class CustomPlaceViz(PlaceViz):
 
         # draw marking
         markings = [ token for token in self._model_node.marking ]
-        last_time = self._last_time
+        last_time = round(markings[-1].time,2) if len(markings) > 0 else None
         radius = self._half_height * 0.5  # distance from center for small circles
         small_radius = self._half_height * 0.18
         n = 8
@@ -70,15 +70,11 @@ class CustomPlaceViz(PlaceViz):
                     int(small_radius),
                     LINE_WIDTH
                 )
-                if last_time is None:
-                    last_time = round(token.time, 2)
-                elif last_time < token.time:
-                    last_time = round(token.time, 2)
             mstr = f"last @ {last_time}"
         else:
 
             count = len(markings)
-            for i,token in enumerate(markings):
+            for i,token in enumerate(markings[:8]):
                 if (i < n):
                     angle = 2 * math.pi * i / n  # angle in radians
                     x_offset = radius * math.cos(angle)
@@ -95,14 +91,10 @@ class CustomPlaceViz(PlaceViz):
                         int(small_radius),
                         LINE_WIDTH
                     )
-                if last_time is None:
-                    last_time = round(token.time, 2)
-                elif last_time < token.time:
-                    last_time = round(token.time, 2)
 
             label = bold_font.render(f"{n}+", True, TUE_RED)
             screen.blit(label, (self._pos[0]-self._half_height * 0.25, self._pos[1]-self._half_height * 0.25))
-            mstr = f"(x{count}) last @ {last_time}"
+            mstr = f"(x{count}) last @ {round(markings[-1].time, 2)}"
             
         label = bold_font.render(mstr, True, TUE_RED)
         text_x_pos = self._pos[0] - int(label.get_width()/2)

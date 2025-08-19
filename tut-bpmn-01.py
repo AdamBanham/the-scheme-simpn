@@ -15,7 +15,7 @@ from sys import argv
 
 LAYOUT_FILE = join(".", "tut-bpmn-01.layout")
 
-TESTING = True
+TESTING = False
 T_DURATION = DURATION / 4
 RECORD = False
 
