@@ -4,7 +4,7 @@ import traceback
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 import simpn.assets as assets
-from simpn.visualisation import Shape, Hook, PlaceViz, Edge, Node
+from simpn.visualisation import Shape, Hook, PlaceViz, Edge, Node, Visualisation
 from time import time
 from enum import Enum, auto
 import math
@@ -231,7 +231,7 @@ class CustomEdge(Edge):
 
     
 
-class Visualisation:
+class Visualisation(Visualisation):
     """
     A class for visualizing the provided simulation problem as a Petri net.
 
@@ -264,6 +264,7 @@ class Visualisation:
         self._grid_spacing = grid_spacing
         self._node_spacing = node_spacing
         self._layout_algorithm = layout_algorithm
+        self.__playing = False
 
         self.__running = False
         self._problem = sim_problem
@@ -277,6 +278,8 @@ class Visualisation:
         self._speed = 1
         self._speed_complete = 0
         self._speed_time = 0
+
+        self.__create_buttons_closed_menu()
 
         # Add visualizations for prototypes, places, and transitions,
         # but not for places and transitions that are part of prototypes.
@@ -364,10 +367,13 @@ class Visualisation:
         # scale the entire screen using the self._zoom_level and draw it in the window
         self.__screen.get_width()
         self.__win.blit(pygame.transform.smoothscale(self.__screen, (self._size[0], self._size[1])), (0, 0))
+        # draw buttons
+        for button in self.buttons:
+            button.draw(self.__win)
         pygame.display.flip()
 
     def __debug_info(self):
-        y = (5 / self._zoom_level)
+        y = ((self.__screen.get_height() * 0.5) / self._zoom_level)
         font = pygame.font.SysFont('Calibri', TEXT_SIZE)
         # add the current time of the problem in the top left
         label = font.render(f"Current Clock: {round(self._problem.clock,2)}", True, TUE_RED)
@@ -410,28 +416,6 @@ class Visualisation:
                 break
         self._speed_complete = s + 1
         self._speed_time = int((time() - t) * 1000)
-
-    def __init_buttons(self):
-        # No buttons for now.
-        # btn_step = Button()        
-        # pygame.draw.polygon(btn_step.image, TUE_RED, [(0, 0), (0, 30), (20, 15)])
-        # pygame.draw.polygon(btn_step.image, TUE_RED, [(20, 0), (20, 30), (25, 30), (25, 0)])
-        # btn_step.set_pos(self._size[0]-100, self._size[1]-50)
-        # btn_step.action = self.action_step
-
-        # return [btn_step]
-        return []
-
-    def __draw_buttons(self):
-        for btn in self._buttons:
-            btn.draw(self.__screen)
-
-    def __click_button_at(self, pos):
-        for btn in self._buttons:
-            if btn.rect.collidepoint(pos):
-                btn.action()
-                return True
-        return False
 
     def __layout(self):
         graph = igraph.Graph()
@@ -601,6 +585,9 @@ class Visualisation:
         if event.type == pygame.QUIT:
             self.__running = False
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            for button in self.buttons:
+                if button.click(event.pos):
+                    return
             node = self.__get_node_at(event.pos)
             if node is not None:
                 self._selected_nodes = [node], event.pos
